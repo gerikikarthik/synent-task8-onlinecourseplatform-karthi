@@ -9,14 +9,13 @@ export default function Register() {
   const registerUser = async () => {
     try {
       const res = await axios.post(
-       "https://synent-task8-onlinecourseplatform-karthi.onrender.com"
-        {
-          name,
-          email,
-          password,
-        }
-      );
-
+  "https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/auth/register",
+  {
+    name,
+    email,
+    password
+  }
+);
       alert("Registered Successfully 🚀");
       console.log(res.data);
 

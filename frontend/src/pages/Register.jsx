@@ -9,7 +9,7 @@ export default function Register() {
   const registerUser = async () => {
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/auth/register",
+       "https://synent-task8-onlinecourseplatform-karthi.onrender.com"
         {
           name,
           email,

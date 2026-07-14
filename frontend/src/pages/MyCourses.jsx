@@ -16,7 +16,7 @@ export default function MyCourses() {
 
   try {
     const res = await axios.get(
-      "http://localhost:5000/api/auth/mycourses",
+      "https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/auth/mycourses",
       {
         headers: {
           Authorization: `Bearer ${token}`,

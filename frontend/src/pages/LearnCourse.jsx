@@ -13,7 +13,7 @@ export default function LearnCourse() {
 
   const fetchCourse = async () => {
     const res = await axios.get(
-      `http://localhost:5000/api/courses/${id}`
+      `https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/courses/${id}`
     );
 
     setCourse(res.data);

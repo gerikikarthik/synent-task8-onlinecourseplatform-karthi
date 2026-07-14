@@ -42,7 +42,7 @@ export default function Admin() {
   const fetchUsers = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/auth/users"
+        "https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/auth/users"
       );
 
       setUsers(res.data);
@@ -57,7 +57,7 @@ export default function Admin() {
   const fetchCourses = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/courses"
+        "https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/courses"
       );
 
       setCourses(res.data);
@@ -98,7 +98,7 @@ export default function Admin() {
     try {
 
       await axios.post(
-        "http://localhost:5000/api/courses",
+        "https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/courses",
         {
           title,
           description,
@@ -162,7 +162,7 @@ export default function Admin() {
     try {
 
       await axios.delete(
-        `http://localhost:5000/api/courses/${id}`,
+        `https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/courses/${id}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -193,7 +193,7 @@ export default function Admin() {
     try {
 
       await axios.delete(
-        `http://localhost:5000/api/auth/users/${id}`
+        `https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/auth/users/${id}`
       );
 
       alert("User Deleted Successfully");

@@ -14,7 +14,7 @@ export default function CourseDetails() {
   const getCourse = async () => {
     try {
       const res = await axios.get(
-        `http://localhost:5000/api/courses/${id}`
+        `https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/courses/${id}`
       );
 
       setCourse(res.data);
@@ -35,7 +35,7 @@ export default function CourseDetails() {
       }
 
       const res = await axios.post(
-        `http://localhost:5000/api/auth/enroll/${course._id}`,
+        `https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/auth/enroll/${course._id}`,
         {},
         {
           headers: {

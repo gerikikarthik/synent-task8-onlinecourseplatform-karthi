@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Online Course Platform</string>
+    <string name="title_activity_main">Online Course Platform</string>
+    <string name="package_name">com.karthik.onlinecourse</string>
+    <string name="custom_url_scheme">com.karthik.onlinecourse</string>
+</resources>

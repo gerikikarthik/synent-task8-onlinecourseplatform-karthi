@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
 import axios from "axios";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
@@ -6,7 +7,11 @@ import { saveAs } from "file-saver";
 export default function Admin() {
 
   // ================= USERS =================
+const user = JSON.parse(localStorage.getItem("user"));
 
+if (!user || user.role !== "admin") {
+  return <Navigate to="/" replace />;
+}
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState(null);

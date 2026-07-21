@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:5000/api/ai";
+const API_URL = "https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/ai";
 
 export const generateRoadmap = async (data) => {
   const response = await axios.post(

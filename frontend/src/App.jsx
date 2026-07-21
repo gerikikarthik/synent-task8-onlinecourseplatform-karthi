@@ -10,11 +10,14 @@ import CourseDetails from "./pages/CourseDetails";
 import Admin from "./pages/Admin";
 import MyCourses from "./pages/MyCourses";
 import LearnCourse from "./pages/LearnCourse";
+import AIRoadmap from "./pages/AIRoadmap";
+
 
 export default function App() {
   return (
     <BrowserRouter>
       <Navbar />
+
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
@@ -25,6 +28,8 @@ export default function App() {
         <Route path="/admin" element={<Admin />} />
         <Route path="/my-courses" element={<MyCourses />} />
         <Route path="/learn/:id" element={<LearnCourse />} />
+      
+        <Route path="/ai-roadmap" element={<AIRoadmap />} />
       </Routes>
     </BrowserRouter>
   );

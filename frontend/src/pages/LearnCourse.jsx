@@ -1,54 +1,109 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 
 export default function LearnCourse() {
   const { id } = useParams();
+  const navigate = useNavigate();
 
-  const [course, setCourse] = useState(null);
+  const [course, setCourse] = useState({});
+  const [videoCompleted, setVideoCompleted] = useState(false);
 
   useEffect(() => {
-    fetchCourse();
+    getCourse();
   }, []);
 
-  const fetchCourse = async () => {
-    const res = await axios.get(
-      `https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/courses/${id}`
-    );
+  const getCourse = async () => {
+    try {
+      const res = await axios.get(
+        `https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/courses/${id}`
+      );
 
-    setCourse(res.data);
+      console.log(res.data);
+      setCourse(res.data);
+    } catch (err) {
+      console.log(err);
+    }
   };
 
-  if (!course) return <h2 className="text-center mt-5">Loading...</h2>;
-
   return (
-    <div className="container py-5">
+    <div
+      className="container py-5"
+      style={{ maxWidth: "1000px" }}
+    >
+      <div className="card shadow p-4">
 
-      <h2>{course.title}</h2>
+        <h2 className="text-center text-primary mb-4">
+          🎓 Learn Course
+        </h2>
 
-      <p>{course.description}</p>
+        <h3>{course.title}</h3>
 
-      <div className="ratio ratio-16x9 mb-4">
-        <iframe
-          src={course.videoUrl}
-          title="Course Video"
-          allowFullScreen
-        ></iframe>
-      </div>
+        <p>{course.description}</p>
 
-      <h4>Course Content</h4>
+        {/* YouTube Video */}
+        {course.videoUrl && (
+          <div className="text-center my-4">
+            <iframe
+              width="850"
+              height="480"
+              src={course.videoUrl}
+              title="Course Video"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            ></iframe>
+          </div>
+        )}
 
-      <ul className="list-group">
-        {course.courseContent?.map((lesson, index) => (
-          <li
-            key={index}
-            className="list-group-item"
+        <div className="form-check my-4">
+          <input
+            className="form-check-input"
+            type="checkbox"
+            id="videoCompleted"
+            checked={videoCompleted}
+            onChange={(e) =>
+              setVideoCompleted(e.target.checked)
+            }
+          />
+
+          <label
+            className="form-check-label"
+            htmlFor="videoCompleted"
           >
-            📖 {lesson}
-          </li>
-        ))}
-      </ul>
+            I have completed watching this course video.
+          </label>
+        </div>
 
+        {!videoCompleted && (
+          <div className="alert alert-warning">
+            ⚠ Please watch the video and tick the checkbox to enable
+            the Complete Course button.
+          </div>
+        )}
+
+        <button
+          className={`btn ${
+            videoCompleted
+              ? "btn-success"
+              : "btn-secondary"
+          } w-100`}
+          disabled={!videoCompleted}
+          onClick={() => {
+            localStorage.setItem(
+              "selectedCourse",
+              course.title
+            );
+
+            alert("🎉 Course Completed Successfully!");
+
+            navigate("/ai-roadmap");
+          }}
+        >
+          ✅ COMPLETE COURSE
+        </button>
+
+      </div>
     </div>
   );
 }

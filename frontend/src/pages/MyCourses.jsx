@@ -10,27 +10,25 @@ export default function MyCourses() {
     getMyCourses();
   }, []);
 
- const getMyCourses = async () => {
-  const token = localStorage.getItem("token");
-  console.log("TOKEN =", token);
+  const getMyCourses = async () => {
+    const token = localStorage.getItem("token");
 
-  try {
-    const res = await axios.get(
-      "https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/auth/mycourses",
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    try {
+      const res = await axios.get(
+        "https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/auth/mycourses",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    setCourses(res.data);
-
-  } catch (err) {
-    console.log(err.response);
-    alert(JSON.stringify(err.response?.data));
-  }
-};
+      setCourses(res.data);
+    } catch (err) {
+      console.log(err.response);
+      alert(JSON.stringify(err.response?.data));
+    }
+  };
 
   return (
     <div className="container py-5">
@@ -61,20 +59,23 @@ export default function MyCourses() {
                   <p>{course.description}</p>
 
                   <p>
-                    <strong>Instructor:</strong>{" "}
-                    {course.instructor}
+                    <strong>Instructor:</strong> {course.instructor}
                   </p>
 
-                  <p>
-                    ⭐ {course.rating}
-                  </p>
+                  <p>⭐ {course.rating}</p>
 
-   <button
-  className="btn btn-success w-100"
-  onClick={() => navigate(`/learn/${course._id}`)}
->
-  ▶ Continue Learning
-</button>
+                  <button
+                    className="btn btn-success w-100"
+                    onClick={() => {
+                      localStorage.setItem(
+                        "selectedCourse",
+                        course.title
+                      );
+                      navigate(`/learn/${course._id}`);
+                    }}
+                  >
+                    ▶ Continue Learning
+                  </button>
 
                 </div>
 

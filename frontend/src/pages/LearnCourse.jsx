@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import YouTube from "react-youtube";
 
 export default function LearnCourse() {
 
@@ -10,8 +9,6 @@ export default function LearnCourse() {
 
   const [course, setCourse] = useState({});
   const [loading, setLoading] = useState(true);
-
-  // Video complete ayinda leda
   const [videoCompleted, setVideoCompleted] = useState(false);
 
   useEffect(() => {
@@ -27,7 +24,7 @@ export default function LearnCourse() {
     try {
 
       const res = await axios.get(
-        `http://localhost:5000/api/courses/${id}`
+        `https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/courses/${id}`
       );
 
       setCourse(res.data);
@@ -36,48 +33,9 @@ export default function LearnCourse() {
 
       console.log(err);
 
-    }
+    } finally {
 
-    setLoading(false);
-
-  };
-
-  // ==========================
-  // GET YOUTUBE VIDEO ID
-  // ==========================
-
-  const getVideoId = (url) => {
-
-    if (!url) return "";
-
-    if (url.includes("embed/")) {
-      return url.split("embed/")[1].split("?")[0];
-    }
-
-    if (url.includes("watch?v=")) {
-      return url.split("watch?v=")[1].split("&")[0];
-    }
-
-    if (url.includes("youtu.be/")) {
-      return url.split("youtu.be/")[1].split("?")[0];
-    }
-
-    return "";
-
-  };
-
-  // ==========================
-  // VIDEO END EVENT
-  // ==========================
-
-  const onPlayerStateChange = (event) => {
-
-    // 0 = Video Ended
-    if (event.data === 0) {
-
-      setVideoCompleted(true);
-
-      alert("🎉 Video Completed Successfully!");
+      setLoading(false);
 
     }
 
@@ -91,7 +49,7 @@ export default function LearnCourse() {
 
     if (!videoCompleted) {
 
-      alert("⚠ Please watch the complete video first.");
+      alert("⚠ Please watch the video and tick the checkbox.");
 
       return;
 
@@ -103,7 +61,7 @@ export default function LearnCourse() {
 
       await axios.post(
 
-        `http://localhost:5000/api/progress/${id}`,
+        `https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/progress/complete/${id}`,
 
         {},
 
@@ -115,7 +73,7 @@ export default function LearnCourse() {
 
       );
 
-      alert("🎉 Course Completed!");
+      alert("🎉 Course Completed Successfully!");
 
       navigate(`/certificate/${id}`);
 
@@ -134,7 +92,9 @@ export default function LearnCourse() {
     return (
 
       <div className="container mt-5 text-center">
+
         <h2>Loading...</h2>
+
       </div>
 
     );
@@ -157,63 +117,67 @@ export default function LearnCourse() {
           {course.title}
         </h3>
 
-        <p className="text-muted">
+        <p
+          className="text-muted mb-4"
+          style={{
+            fontSize: "17px",
+          }}
+        >
           {course.description}
         </p>
 
+        {/* Course Video */}
+
         {course.videoUrl && (
 
-          <div className="text-center my-4">
+          <div className="text-center mb-4">
 
-            <YouTube
-              videoId={getVideoId(course.videoUrl)}
-
-              opts={{
-                width: "850",
-                height: "480",
-
-                playerVars: {
-                  autoplay: 0,
-                  controls: 1,
-                  rel: 0,
-                  modestbranding: 1,
-                },
+            <iframe
+              width="850"
+              height="480"
+              src={course.videoUrl}
+              title="Course Video"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              style={{
+                borderRadius: "12px",
+                maxWidth: "100%",
               }}
-
-              onStateChange={onPlayerStateChange}
-
-            />
+            ></iframe>
 
           </div>
 
         )}
 
-        <div className="alert alert-info mt-3">
+        <div className="alert alert-info">
 
-          📺 Please watch the complete video.
+          📺 Please watch the complete course video.
 
           <br />
 
-          ✅ After the video ends, the checkbox will be selected automatically.
+          ✅ After watching the video, tick the checkbox below to continue.
 
         </div>
-        {/* Video Completion Status */}
+        {/* Video Completion Checkbox */}
 
         <div className="form-check my-4">
 
           <input
             className="form-check-input"
             type="checkbox"
+            id="videoCompleted"
             checked={videoCompleted}
-            readOnly
+            onChange={(e) =>
+              setVideoCompleted(e.target.checked)
+            }
           />
 
           <label
             className="form-check-label ms-2"
+            htmlFor="videoCompleted"
           >
-            {videoCompleted
-              ? "✅ Video Completed Successfully"
-              : "⏳ Please watch the full video"}
+            I have completed watching this course video.
           </label>
 
         </div>
@@ -222,17 +186,8 @@ export default function LearnCourse() {
 
           <div className="alert alert-warning">
 
-            ⚠ You must watch the complete video before completing the course.
-
-          </div>
-
-        )}
-
-        {videoCompleted && (
-
-          <div className="alert alert-success">
-
-            🎉 Great! You can now complete the course.
+            ⚠ Please watch the course video completely and tick the checkbox before clicking
+            <strong> Complete Course</strong>.
 
           </div>
 

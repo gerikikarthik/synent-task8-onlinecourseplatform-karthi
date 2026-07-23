@@ -15,7 +15,7 @@ export default function VerifyCertificate() {
   const verifyCertificate = async () => {
     try {
       const res = await axios.get(
-        `http://localhost:5000/api/certificate/verify/${certificateId}`
+        `https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/certificate/verify/${certificateId}`
       );
 
       setCertificate(res.data);

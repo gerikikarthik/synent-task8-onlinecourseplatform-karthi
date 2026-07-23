@@ -1,0 +1,188 @@
+body{
+    background:#eef2f7;
+}
+
+.certificate-page{
+    min-height:100vh;
+    padding:40px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+}
+
+.certificate{
+    width:1000px;
+    background:#fffdf5;
+    border:18px solid #c9a227;
+    outline:6px solid #f5e3a5;
+    outline-offset:-18px;
+    border-radius:20px;
+    padding:70px;
+    position:relative;
+    overflow:hidden;
+    text-align:center;
+    box-shadow:0 0 35px rgba(0,0,0,.25);
+}
+
+.watermark{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    font-size:150px;
+    color:#d4af37;
+    opacity:.05;
+    font-family:Georgia;
+    font-weight:bold;
+    user-select:none;
+}
+
+.logo{
+    width:90px;
+    margin-bottom:15px;
+}
+
+.company-name{
+    color:#0d47a1;
+    font-size:46px;
+    font-weight:bold;
+    letter-spacing:5px;
+}
+
+.certificate-heading{
+    color:#c79a00;
+    font-size:34px;
+    letter-spacing:6px;
+    margin-top:10px;
+}
+
+.gold-line{
+    width:80%;
+    height:3px;
+    background:#d4af37;
+    margin:25px auto;
+}
+
+.sub-heading{
+    font-size:22px;
+    color:#555;
+}
+
+.student-name{
+    font-size:70px;
+    color:#0d47a1;
+    margin:20px 0;
+    font-family:cursive;
+}
+
+.course-name{
+    font-size:30px;
+    color:#222;
+    margin-top:20px;
+}
+
+.duration{
+    color:#777;
+    font-size:18px;
+}
+
+.description{
+    margin-top:25px;
+    line-height:35px;
+    color:#555;
+    font-size:19px;
+}
+
+.achievement-box{
+    margin-top:35px;
+    display:inline-block;
+    background:#0d6efd;
+    color:#fff;
+    padding:12px 30px;
+    border-radius:30px;
+    font-weight:bold;
+}
+
+.gold-ribbon{
+    position:absolute;
+    top:25px;
+    left:-45px;
+    background:#c79a00;
+    color:white;
+    padding:10px 70px;
+    transform:rotate(-45deg);
+    font-size:13px;
+    font-weight:bold;
+}
+
+.corner{
+    width:60px;
+    height:60px;
+    border:5px solid #c79a00;
+    position:absolute;
+}
+
+.top-left{
+    top:12px;
+    left:12px;
+    border-right:none;
+    border-bottom:none;
+}
+
+.top-right{
+    top:12px;
+    right:12px;
+    border-left:none;
+    border-bottom:none;
+}
+
+.bottom-left{
+    bottom:12px;
+    left:12px;
+    border-right:none;
+    border-top:none;
+}
+
+.bottom-right{
+    bottom:12px;
+    right:12px;
+    border-left:none;
+    border-top:none;
+}
+
+.certificate-footer{
+    display:flex;
+    justify-content:space-between;
+    margin-top:60px;
+    align-items:flex-end;
+}
+
+.footer-box{
+    width:30%;
+    text-align:center;
+}
+
+.qr-code{
+    width:90px;
+}
+
+.signature{
+    width:150px;
+}
+
+.signature-line{
+    border-top:2px solid black;
+    width:180px;
+    margin:5px auto;
+}
+
+.gold-seal{
+    position:absolute;
+    right:35px;
+    bottom:35px;
+    width:110px;
+}
+
+.btn{
+    margin-top:30px;
+}

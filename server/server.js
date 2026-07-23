@@ -7,7 +7,8 @@ const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const courseRoutes = require("./routes/courseRoutes");
 const aiRoutes = require("./routes/aiRoutes");
-
+const progressRoutes = require("./routes/progressRoutes");
+const certificateRoutes = require("./routes/certificateRoutes");
 const app = express();
 
 // Database Connection
@@ -26,7 +27,8 @@ app.get("/test", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/ai", aiRoutes);
-
+app.use("/api/progress", progressRoutes);
+app.use("/api/certificate", certificateRoutes);
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {

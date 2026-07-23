@@ -1,20 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { generateRoadmap } from "../services/aiService";
 
 function AIRoadmap() {
+  const navigate = useNavigate();
+
   const [career, setCareer] = useState("");
   const [experience, setExperience] = useState("");
   const [dailyTime, setDailyTime] = useState("");
   const [roadmap, setRoadmap] = useState(null);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const course = localStorage.getItem("selectedCourse");
-
-    if (course) {
-      setCareer(course);
-    }
-  }, []);
 
   const handleGenerate = async (e) => {
     e.preventDefault();
@@ -28,14 +23,15 @@ function AIRoadmap() {
         dailyTime,
       });
 
-      console.log("API Response:", res);
-
       setRoadmap(res.roadmap);
-    } catch (err) {
-      console.log(err);
-      alert(JSON.stringify(err.response?.data || err.message));
-    } finally {
       setLoading(false);
+    } catch (err) {
+      setLoading(false);
+
+      console.log(err);
+      console.log(err.response);
+
+      alert(JSON.stringify(err.response?.data || err.message));
     }
   };
 
@@ -46,57 +42,37 @@ function AIRoadmap() {
         🤖 AI Career Roadmap
       </h2>
 
-      <form onSubmit={handleGenerate} className="card p-4 shadow">
+      <form onSubmit={handleGenerate} className="card shadow p-4">
 
-        <div className="mb-3">
-          <label className="form-label">Career</label>
-          <input
-            type="text"
-            className="form-control"
-            placeholder="Career"
-            value={career}
-            onChange={(e) => setCareer(e.target.value)}
-            required
-          />
-        </div>
+        <input
+          type="text"
+          className="form-control mb-3"
+          placeholder="Career (Example: Java Full Stack)"
+          value={career}
+          onChange={(e) => setCareer(e.target.value)}
+          required
+        />
 
-        <div className="mb-3">
-          <label className="form-label">Experience</label>
-          <select
-            className="form-select"
-            value={experience}
-            onChange={(e) => setExperience(e.target.value)}
-            required
-          >
-            <option value="">Select Experience</option>
-            <option>Beginner</option>
-            <option>Intermediate</option>
-            <option>Advanced</option>
-          </select>
-        </div>
+        <input
+          type="text"
+          className="form-control mb-3"
+          placeholder="Experience"
+          value={experience}
+          onChange={(e) => setExperience(e.target.value)}
+          required
+        />
 
-        <div className="mb-3">
-          <label className="form-label">Daily Study Time</label>
-          <select
-            className="form-select"
-            value={dailyTime}
-            onChange={(e) => setDailyTime(e.target.value)}
-            required
-          >
-            <option value="">Select Time</option>
-            <option>1 Hour</option>
-            <option>2 Hours</option>
-            <option>3 Hours</option>
-            <option>4 Hours</option>
-          </select>
-        </div>
+        <input
+          type="text"
+          className="form-control mb-3"
+          placeholder="Daily Study Time"
+          value={dailyTime}
+          onChange={(e) => setDailyTime(e.target.value)}
+          required
+        />
 
-        <button
-          type="submit"
-          className="btn btn-primary w-100"
-          disabled={loading}
-        >
-          {loading ? "Generating..." : "Generate AI Roadmap"}
+        <button className="btn btn-primary">
+          {loading ? "Generating..." : "Generate Roadmap"}
         </button>
 
       </form>
@@ -107,9 +83,7 @@ function AIRoadmap() {
           <div className="card shadow mb-4">
             <div className="card-body">
               <h3>{roadmap.title}</h3>
-              <h5 className="text-success">
-                Duration: {roadmap.duration}
-              </h5>
+              <h5>Duration: {roadmap.duration}</h5>
             </div>
           </div>
 
@@ -117,7 +91,7 @@ function AIRoadmap() {
             <div key={index} className="card shadow mb-3">
               <div className="card-body">
 
-                <h4>{module.name || module.title}</h4>
+                <h4>{module.title}</h4>
 
                 <p>
                   <strong>Duration:</strong> {module.duration}
@@ -132,6 +106,21 @@ function AIRoadmap() {
               </div>
             </div>
           ))}
+
+          <div className="text-center mt-4">
+
+            <button
+              className="btn btn-success btn-lg"
+              onClick={() => {
+                const courseId = localStorage.getItem("courseId");
+
+                navigate(`/certificate/${courseId}`);
+              }}
+            >
+              🎓 Get Certificate
+            </button>
+
+          </div>
 
         </div>
       )}

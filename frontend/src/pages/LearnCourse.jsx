@@ -41,7 +41,6 @@ export default function LearnCourse() {
 
         <p>{course.description}</p>
 
-        {/* YouTube Video */}
         {course.videoUrl && (
           <div className="text-center my-4">
             <iframe
@@ -62,9 +61,7 @@ export default function LearnCourse() {
             type="checkbox"
             id="videoCompleted"
             checked={videoCompleted}
-            onChange={(e) =>
-              setVideoCompleted(e.target.checked)
-            }
+            onChange={(e) => setVideoCompleted(e.target.checked)}
           />
 
           <label
@@ -84,16 +81,12 @@ export default function LearnCourse() {
 
         <button
           className={`btn ${
-            videoCompleted
-              ? "btn-success"
-              : "btn-secondary"
+            videoCompleted ? "btn-success" : "btn-secondary"
           } w-100`}
           disabled={!videoCompleted}
           onClick={() => {
-            localStorage.setItem(
-              "selectedCourse",
-              course.title
-            );
+            localStorage.setItem("selectedCourse", course.title);
+            localStorage.setItem("courseId", id);
 
             alert("🎉 Course Completed Successfully!");
 

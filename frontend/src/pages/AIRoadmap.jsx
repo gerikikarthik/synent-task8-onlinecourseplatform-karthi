@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { generateRoadmap } from "../services/aiService";
-
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 function AIRoadmap() {
 
   const navigate = useNavigate();
@@ -58,7 +59,63 @@ function AIRoadmap() {
     }
 
   };
+const downloadRoadmap = () => {
 
+  const input = document.getElementById("roadmap");
+
+  html2canvas(input, {
+    scale: 2,
+    useCORS: true,
+    backgroundColor: "#ffffff",
+  }).then((canvas) => {
+
+    const imgData = canvas.toDataURL("image/png");
+
+    const pdf = new jsPDF("p", "mm", "a4");
+
+    const pageWidth = 210;
+    const pageHeight = 297;
+
+    const imgWidth = pageWidth;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    let heightLeft = imgHeight;
+    let position = 0;
+
+    pdf.addImage(
+      imgData,
+      "PNG",
+      0,
+      position,
+      imgWidth,
+      imgHeight
+    );
+
+    heightLeft -= pageHeight;
+
+    while (heightLeft > 0) {
+
+      position = heightLeft - imgHeight;
+
+      pdf.addPage();
+
+      pdf.addImage(
+        imgData,
+        "PNG",
+        0,
+        position,
+        imgWidth,
+        imgHeight
+      );
+
+      heightLeft -= pageHeight;
+    }
+
+    pdf.save("AI-Career-Roadmap.pdf");
+
+  });
+
+};
   // ===========================
   // AUTO GENERATE ROADMAP
   // ===========================
@@ -88,36 +145,95 @@ function AIRoadmap() {
         className="card shadow p-4"
       >
 
-        <input
-          type="text"
-          className="form-control mb-3"
-          placeholder="Career"
-          value={career}
-          onChange={(e) => setCareer(e.target.value)}
-          required
-        />
+        <div className="mb-3">
 
-        <input
-          type="text"
-          className="form-control mb-3"
-          placeholder="Experience"
-          value={experience}
-          onChange={(e) => setExperience(e.target.value)}
-          required
-        />
+          <label className="form-label">
+            Career
+          </label>
 
-        <input
-          type="text"
-          className="form-control mb-3"
-          placeholder="Daily Study Time"
-          value={dailyTime}
-          onChange={(e) => setDailyTime(e.target.value)}
-          required
-        />
+          <input
+            type="text"
+            className="form-control"
+            value={career}
+            readOnly
+          />
+
+        </div>
+
+        <div className="mb-3">
+
+          <label className="form-label">
+            Experience
+          </label>
+
+          <select
+            className="form-select"
+            value={experience}
+            onChange={(e) =>
+              setExperience(e.target.value)
+            }
+          >
+
+            <option value="Beginner">
+              🟢 Beginner
+            </option>
+
+            <option value="Intermediate">
+              🟡 Intermediate
+            </option>
+
+            <option value="Advanced">
+              🔴 Advanced
+            </option>
+
+          </select>
+
+        </div>
+        <div className="mb-3">
+
+          <label className="form-label">
+            Daily Study Time
+          </label>
+
+          <select
+            className="form-select"
+            value={dailyTime}
+            onChange={(e) =>
+              setDailyTime(e.target.value)
+            }
+          >
+
+            <option value="1 Hour">
+              1 Hour / Day
+            </option>
+
+            <option value="2 Hours">
+              2 Hours / Day
+            </option>
+
+            <option value="3 Hours">
+              3 Hours / Day
+            </option>
+
+            <option value="4 Hours">
+              4 Hours / Day
+            </option>
+
+            <option value="5 Hours">
+              5 Hours / Day
+            </option>
+
+            <option value="6 Hours">
+              6 Hours / Day
+            </option>
+
+          </select>
+
+        </div>
 
         <button
           type="submit"
-          className="btn btn-primary btn-lg"
+          className="btn btn-primary btn-lg w-100"
           disabled={loading}
         >
           {loading
@@ -129,16 +245,18 @@ function AIRoadmap() {
 
       {roadmap && (
 
-        <div className="mt-5">
+        <div id="roadmap" className="mt-5">
 
           <div className="card shadow mb-4">
 
-            <div className="card-body">
+            <div className="card-body text-center">
 
-              <h3>{roadmap.title}</h3>
+              <h2 className="text-primary">
+                {roadmap.title}
+              </h2>
 
               <h5>
-                Duration: {roadmap.duration}
+                📅 Duration : {roadmap.duration}
               </h5>
 
             </div>
@@ -146,22 +264,35 @@ function AIRoadmap() {
           </div>
           {roadmap.modules.map((module, index) => (
 
-            <div key={index} className="card shadow mb-3">
+            <div
+              key={index}
+              className="card shadow mb-3 border-0"
+            >
 
               <div className="card-body">
 
-                <h4>{module.title}</h4>
+                <h4 className="text-success">
+                  📘 {module.title}
+                </h4>
 
                 <p>
-                  <strong>Duration:</strong> {module.duration}
+                  <strong>⏳ Duration:</strong>{" "}
+                  {module.duration}
                 </p>
 
-                <ul>
+                <h5 className="mt-3">
+                  Topics Covered
+                </h5>
+
+                <ul className="list-group list-group-flush">
 
                   {module.topics.map((topic, i) => (
 
-                    <li key={i}>
-                      {topic}
+                    <li
+                      key={i}
+                      className="list-group-item"
+                    >
+                      ✅ {topic}
                     </li>
 
                   ))}
@@ -173,22 +304,24 @@ function AIRoadmap() {
             </div>
 
           ))}
-
-          <div className="text-center mt-4">
+          <div className="text-center mt-5 mb-5">
 
             <button
-              className="btn btn-success btn-lg"
+              className="btn btn-success btn-lg me-3"
               onClick={() => navigate("/my-courses")}
             >
               📚 Back to My Courses
             </button>
-
-          </div>
+<button
+  className="btn btn-primary btn-lg"
+  onClick={downloadRoadmap}
+>
+  📄 Download AI Roadmap PDF
+</button>                     </div>
 
         </div>
 
       )}
-
     </div>
 
   );

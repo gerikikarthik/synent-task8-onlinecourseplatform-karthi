@@ -79,11 +79,13 @@ export default function LearnCourse() {
 
     } catch (err) {
 
-      console.log(err.response?.data || err.message);
+  console.log("STATUS:", err.response?.status);
+  console.log("DATA:", err.response?.data);
+  console.log("FULL ERROR:", err);
 
-      alert("Failed to complete course");
+  alert(JSON.stringify(err.response?.data || err.message));
 
-    }
+}
 
   };
 

@@ -27,8 +27,8 @@ app.get("/test", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/ai", aiRoutes);
-app.use("/api/progress", progressRoutes);
 app.use("/api/certificate", certificateRoutes);
+app.use("/api/progress", progressRoutes);
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {

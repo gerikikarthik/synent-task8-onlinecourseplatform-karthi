@@ -142,19 +142,29 @@ router.post("/enroll/:courseId", protect, async (req, res) => {
       });
     }
 
-    const alreadyEnrolled = user.enrolledCourses.some(
-      (id) => id.toString() === course._id.toString()
-    );
+    // Initialize if missing
+if (!user.enrolledCourses) {
+  user.enrolledCourses = [];
+}
 
-    if (alreadyEnrolled) {
-      return res.status(400).json({
-        message: "Already Enrolled",
-      });
-    }
+const alreadyEnrolled = user.enrolledCourses.find(
+  (id) => id.toString() === course._id.toString()
+);
 
-    user.enrolledCourses.push(course._id);
+if (alreadyEnrolled) {
+  return res.status(400).json({
+    success: false,
+    message: "Already Enrolled",
+  });
+}
 
-    await user.save();
+user.enrolledCourses.push(course._id);
+await user.save();
+
+res.json({
+  success: true,
+  message: "Course Enrolled Successfully",
+});    await user.save();
 
     res.json({
       message: "Course Enrolled Successfully",

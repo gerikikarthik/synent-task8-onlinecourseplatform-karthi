@@ -11,6 +11,7 @@ const progressRoutes = require("./routes/progressRoutes");
 const reportRoutes = require("./routes/reportRoutes");
 const certificateRoutes = require("./routes/certificateRoutes");
 const cartRoutes = require("./routes/cartRoutes");
+const enrollmentRoutes = require("./routes/enrollmentRoutes");
 const app = express();
 
 // Database Connection
@@ -33,6 +34,7 @@ app.use("/api/certificate", certificateRoutes);
 app.use("/api/progress", progressRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/cart", cartRoutes);
+app.use("/api/enroll", enrollmentRoutes);
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {

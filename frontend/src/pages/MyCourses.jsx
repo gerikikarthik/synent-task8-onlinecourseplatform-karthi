@@ -23,7 +23,7 @@ export default function MyCourses() {
         }
       );
 
-      setCourses(res.data);
+      setCourses(res.data.courses);
     } catch (err) {
       console.log(err.response);
       alert(JSON.stringify(err.response?.data));

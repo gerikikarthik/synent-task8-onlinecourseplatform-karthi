@@ -58,9 +58,40 @@ const courseSchema = new mongoose.Schema(
       default: "Yes",
     },
 
+    // Premium Full Course Video
     videoUrl: {
       type: String,
       default: "",
+    },
+
+    // Free Preview Video
+    previewVideoUrl: {
+      type: String,
+      default: "",
+    },
+
+    // Premium Course
+    isPremium: {
+      type: Boolean,
+      default: true,
+    },
+
+    // Discount %
+    discount: {
+      type: Number,
+      default: 0,
+    },
+
+    // Notes PDF Link
+    notesUrl: {
+      type: String,
+      default: "",
+    },
+
+    // Quiz Available
+    quizEnabled: {
+      type: Boolean,
+      default: true,
     },
 
     whatYouLearn: [

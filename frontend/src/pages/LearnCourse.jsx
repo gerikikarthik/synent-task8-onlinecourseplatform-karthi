@@ -3,213 +3,207 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 
 export default function LearnCourse() {
-
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [course, setCourse] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [videoCompleted, setVideoCompleted] = useState(false);
+  const [course, setCourse] = useState(null);
+  const [currentLesson, setCurrentLesson] = useState(0);
+
+  // Temporary Lessons
+  const lessons = [
+    {
+      title: "Introduction",
+      video: "https://www.youtube.com/embed/dGcsHMXbSOA",
+      description:
+        "Welcome to the course. In this lesson you will understand what you are going to learn."
+    },
+    {
+      title: "Getting Started",
+      video: "https://www.youtube.com/embed/Ke90Tje7VS0",
+      description:
+        "Learn the basics and setup required before starting the project."
+    },
+    {
+      title: "Final Project",
+      video: "https://www.youtube.com/embed/w7ejDZ8SWv8",
+      description:
+        "Build a complete project and complete your learning journey."
+    }
+  ];
 
   useEffect(() => {
-    getCourse();
+    fetchCourse();
   }, []);
 
-  // ==========================
-  // GET COURSE
-  // ==========================
-
-  const getCourse = async () => {
-
+  const fetchCourse = async () => {
     try {
-
       const res = await axios.get(
         `https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/courses/${id}`
       );
 
       setCourse(res.data);
-
     } catch (err) {
-
       console.log(err);
-
-    } finally {
-
-      setLoading(false);
-
     }
-
   };
 
-  // ==========================
-  // COMPLETE COURSE
-  // ==========================
-
-  const completeCourse = async () => {
-
-    if (!videoCompleted) {
-
-      alert("⚠ Please watch the video and tick the checkbox.");
-
-      return;
-
-    }
-
-    try {
-
-      const token = localStorage.getItem("token");
-
-      await axios.post(
-
-        `https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/progress/complete/${id}`,
-
-        {},
-
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-
-      );
-
-      alert("🎉 Course Completed Successfully!");
-
-      navigate(`/certificate/${id}`);
-
-    } catch (err) {
-
-  console.log("STATUS:", err.response?.status);
-  console.log("DATA:", err.response?.data);
-  console.log("FULL ERROR:", err);
-
-  alert(JSON.stringify(err.response?.data || err.message));
-
-}
-
-  };
-
-  if (loading) {
-
+  if (!course) {
     return (
-
-      <div className="container mt-5 text-center">
-
+      <div className="container text-center mt-5">
         <h2>Loading...</h2>
+      </div>
+    );
+  }
+return (
+  <div
+    className="container-fluid py-5"
+    style={{
+      background: "linear-gradient(135deg,#eef4ff,#ffffff)",
+      minHeight: "100vh",
+    }}
+  >
+    <div className="container">
+
+      {/* Header */}
+
+      <div className="text-center mb-5">
+
+        <h1
+          style={{
+            color: "#0d6efd",
+            fontWeight: "bold",
+          }}
+        >
+          📘 {course.title}
+        </h1>
+
+        <p
+          style={{
+            color: "#666",
+            fontSize: "18px",
+          }}
+        >
+          Continue your learning journey and complete the course.
+        </p>
 
       </div>
 
-    );
+      <div
+        className="card shadow-lg border-0"
+        style={{
+          borderRadius: "20px",
+          overflow: "hidden",
+        }}
+      >
 
-  }
-  return (
+        {/* Video */}
 
-    <div
-      className="container py-5"
-      style={{ maxWidth: "1000px" }}
-    >
+        <div className="ratio ratio-16x9">
 
-      <div className="card shadow-lg p-4 rounded-4">
-
-        <h2 className="text-center text-primary mb-4">
-          🎓 Learn Course
-        </h2>
-
-        <h3 className="fw-bold">
-          {course.title}
-        </h3>
-
-        <p
-          className="text-muted mb-4"
-          style={{
-            fontSize: "17px",
-          }}
-        >
-          {course.description}
-        </p>
-
-        {/* Course Video */}
-
-        {course.videoUrl && (
-
-          <div className="text-center mb-4">
-
-            <iframe
-              width="850"
-              height="480"
-              src={course.videoUrl}
-              title="Course Video"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              style={{
-                borderRadius: "12px",
-                maxWidth: "100%",
-              }}
-            ></iframe>
-
-          </div>
-
-        )}
-
-        <div className="alert alert-info">
-
-          📺 Please watch the complete course video.
-
-          <br />
-
-          ✅ After watching the video, tick the checkbox below to continue.
+          <iframe
+            src={lessons[currentLesson].video}
+            title="Course Video"
+            allowFullScreen
+          ></iframe>
 
         </div>
-        {/* Video Completion Checkbox */}
 
-        <div className="form-check my-4">
+        <div className="card-body p-4">
 
-          <input
-            className="form-check-input"
-            type="checkbox"
-            id="videoCompleted"
-            checked={videoCompleted}
-            onChange={(e) =>
-              setVideoCompleted(e.target.checked)
-            }
-          />
-
-          <label
-            className="form-check-label ms-2"
-            htmlFor="videoCompleted"
+          <h2
+            style={{
+              color: "#0d6efd",
+              fontWeight: "bold",
+            }}
           >
-            I have completed watching this course video.
-          </label>
+            Lesson {currentLesson + 1}
+          </h2>
 
-        </div>
+          <h4 className="mt-3">
+            {lessons[currentLesson].title}
+          </h4>
 
-        {!videoCompleted && (
+          <p
+            className="mt-3"
+            style={{
+              fontSize: "17px",
+              lineHeight: "30px",
+            }}
+          >
+            {lessons[currentLesson].description}
+          </p>
 
-          <div className="alert alert-warning">
+          {/* Progress */}
 
-            ⚠ Please watch the course video completely and tick the checkbox before clicking
-            <strong> Complete Course</strong>.
+          <div className="mt-4">
+
+            <h6>Course Progress</h6>
+
+            <div
+              className="progress"
+              style={{
+                height: "12px",
+                borderRadius: "10px",
+              }}
+            >
+              <div
+                className="progress-bar bg-success"
+                style={{
+                  width: `${
+                    ((currentLesson + 1) / lessons.length) * 100
+                  }%`,
+                }}
+              ></div>
+            </div>
+
+            <small className="text-muted">
+              {Math.round(
+                ((currentLesson + 1) / lessons.length) * 100
+              )}
+              % Completed
+            </small>
 
           </div>
+          {/* Navigation Buttons */}
 
-        )}
+          <div
+            className="d-flex justify-content-between mt-5"
+          >
+            <button
+              className="btn btn-outline-secondary px-4"
+              disabled={currentLesson === 0}
+              onClick={() =>
+                setCurrentLesson(currentLesson - 1)
+              }
+            >
+              ⬅ Previous
+            </button>
 
-        <button
-          className={`btn btn-lg w-100 ${
-            videoCompleted
-              ? "btn-success"
-              : "btn-secondary"
-          }`}
-          disabled={!videoCompleted}
-          onClick={completeCourse}
-        >
-          ✅ COMPLETE COURSE
-        </button>
+            {currentLesson < lessons.length - 1 ? (
+              <button
+                className="btn btn-primary px-4"
+                onClick={() =>
+                  setCurrentLesson(currentLesson + 1)
+                }
+              >
+                Next ➡
+              </button>
+            ) : (
+              <button
+                className="btn btn-success px-4"
+                onClick={() =>
+                  navigate(`/certificate/${course._id}`)
+                }
+              >
+                🏆 Generate Certificate
+              </button>
+            )}
+          </div>
+
+        </div>
       </div>
 
     </div>
-
-  );
-
+  </div>
+);
 }

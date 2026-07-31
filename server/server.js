@@ -8,7 +8,9 @@ const authRoutes = require("./routes/authRoutes");
 const courseRoutes = require("./routes/courseRoutes");
 const aiRoutes = require("./routes/aiRoutes");
 const progressRoutes = require("./routes/progressRoutes");
+const reportRoutes = require("./routes/reportRoutes");
 const certificateRoutes = require("./routes/certificateRoutes");
+const cartRoutes = require("./routes/cartRoutes");
 const app = express();
 
 // Database Connection
@@ -29,6 +31,8 @@ app.use("/api/courses", courseRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/certificate", certificateRoutes);
 app.use("/api/progress", progressRoutes);
+app.use("/api/reports", reportRoutes);
+app.use("/api/cart", cartRoutes);
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {

@@ -29,61 +29,170 @@ export default function MyCourses() {
       alert(JSON.stringify(err.response?.data));
     }
   };
+return (
+  <div
+    className="container-fluid py-5"
+    style={{
+      background: "linear-gradient(135deg,#eef4ff,#ffffff)",
+      minHeight: "100vh",
+    }}
+  >
+    <div className="container">
 
-  return (
-    <div className="container py-5">
-      <h2 className="mb-4">🎓 My Courses</h2>
+      <div className="text-center mb-5">
 
-      <div className="row">
+        <h1
+          style={{
+            fontWeight: "bold",
+            color: "#0d6efd",
+          }}
+        >
+          📚 My Learning
+        </h1>
+
+        <p
+          style={{
+            color: "#666",
+            fontSize: "18px",
+          }}
+        >
+          Continue learning and complete your enrolled courses.
+        </p>
+
+      </div>
+
+      <div className="row g-4">
+
         {courses.length === 0 ? (
-          <h4>No Enrolled Courses</h4>
+
+          <div className="text-center mt-5">
+
+            <img
+              src="https://cdn-icons-png.flaticon.com/512/4076/4076478.png"
+              alt=""
+              width="170"
+            />
+
+            <h3 className="mt-4">
+              No Enrolled Courses
+            </h3>
+
+            <p className="text-muted">
+              Start learning by enrolling in a course.
+            </p>
+
+          </div>
+
         ) : (
           courses.map((course) => (
-            <div className="col-md-4 mb-4" key={course._id}>
-              <div className="card shadow h-100">
+<div className="col-lg-4 col-md-6" key={course._id}>
+  <div
+    className="card h-100 border-0 shadow-lg"
+    style={{
+      borderRadius: "20px",
+      overflow: "hidden",
+      transition: "0.3s",
+    }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.transform = "translateY(-8px)";
+      e.currentTarget.style.boxShadow =
+        "0 15px 35px rgba(0,0,0,0.15)";
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.transform = "translateY(0px)";
+      e.currentTarget.style.boxShadow =
+        "0 5px 15px rgba(0,0,0,0.1)";
+    }}
+  >
+    <img
+      src={course.image}
+      alt={course.title}
+      style={{
+        height: "220px",
+        width: "100%",
+        objectFit: "cover",
+      }}
+    />
 
-                <img
-                  src={course.image}
-                  className="card-img-top"
-                  alt={course.title}
-                  style={{
-                    height: "200px",
-                    objectFit: "cover",
-                  }}
-                />
+    <div className="card-body">
 
-                <div className="card-body">
+      <h4
+        style={{
+          fontWeight: "bold",
+          color: "#0d6efd",
+        }}
+      >
+        {course.title}
+      </h4>
 
-                  <h5>{course.title}</h5>
+      <p
+        style={{
+          color: "#666",
+          minHeight: "60px",
+        }}
+      >
+        {course.description}
+      </p>
 
-                  <p>{course.description}</p>
+      <p>
+        <strong>👨‍🏫 Instructor:</strong>{" "}
+        {course.instructor}
+      </p>
 
-                  <p>
-                    <strong>Instructor:</strong> {course.instructor}
-                  </p>
+      <p className="mb-3">
+        ⭐ {course.rating || "4.8"} / 5
+      </p>
 
-                  <p>⭐ {course.rating}</p>
+      <div className="mb-2">
+        <strong>Progress</strong>
+      </div>
 
-                  <button
-                    className="btn btn-success w-100"
-                    onClick={() => {
-                      localStorage.setItem(
-                        "selectedCourse",
-                        course.title
-                      );
-                      navigate(`/learn/${course._id}`);
-                    }}
-                  >
-                    ▶ Continue Learning
-                  </button>
+      <div
+        className="progress"
+        style={{
+          height: "12px",
+          borderRadius: "10px",
+        }}
+      >
+        <div
+          className="progress-bar bg-success"
+          style={{
+            width: "0%",
+          }}
+        >
+        </div>
+      </div>
 
-                </div>
+      <small className="text-muted">
+        0% Completed
+      </small>
 
-              </div>
-            </div>
+      <button
+        className="btn btn-primary w-100 mt-4"
+        style={{
+          borderRadius: "12px",
+          fontWeight: "bold",
+        }}
+        onClick={() => {
+          localStorage.setItem(
+            "selectedCourse",
+            course.title
+          );
+
+          navigate(`/learn/${course._id}`);
+        }}
+      >
+        ▶ Continue Learning
+      </button>
+
+    </div>
+  </div>
+</div>
           ))
         )}
+
       </div>
     </div>
-  );
+  </div>
+);
 }

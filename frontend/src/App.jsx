@@ -13,6 +13,8 @@ import LearnCourse from "./pages/LearnCourse";
 import AIRoadmap from "./pages/AIRoadmap";
 import Certificate from "./pages/Certificate";
 import VerifyCertificate from "./pages/VerifyCertificate";
+import ExploreCourses from "./pages/ExploreCourses";
+import Cart from "./pages/Cart";
 import { Toaster } from "sonner";
 
 export default function App() {
@@ -34,12 +36,14 @@ export default function App() {
         <Route path="/courses/:id" element={<CourseDetails />} />
 
         <Route path="/admin" element={<Admin />} />
+<Route path="/cart" element={<Cart />} />
 
         <Route path="/my-courses" element={<MyCourses />} />
 
         <Route path="/learn/:id" element={<LearnCourse />} />
 
         <Route path="/ai-roadmap" element={<AIRoadmap />} />
+<Route path="/explore/:category" element={<ExploreCourses />} />
 <Route
   path="/verify-certificate/:certificateId"
   element={<VerifyCertificate />}

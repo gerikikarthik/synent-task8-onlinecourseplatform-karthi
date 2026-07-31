@@ -78,6 +78,11 @@ export default function Navbar() {
                     My Courses
                   </Link>
                 </li>
+<li className="nav-item">
+  <Link className="nav-link" to="/cart">
+    🛒 Cart
+  </Link>
+</li>
 
                 <li className="nav-item">
                   <Link className="nav-link" to="/ai-roadmap">

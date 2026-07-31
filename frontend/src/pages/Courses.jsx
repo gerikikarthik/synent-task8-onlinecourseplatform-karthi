@@ -3,88 +3,154 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 export default function Courses() {
+
   const [courses, setCourses] = useState([]);
+
   const navigate = useNavigate();
 
   useEffect(() => {
-    getCourses();
+    fetchCourses();
   }, []);
 
-  const getCourses = async () => {
-    try {
-      const token = localStorage.getItem("token");
+  const fetchCourses = async () => {
 
-      const res = await axios.get("https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/courses", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+    try {
+
+      const res = await axios.get(
+        "https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/courses"
+      );
 
       setCourses(res.data);
+
     } catch (err) {
-      console.log(err);
-      alert("Please login first");
+
+      console.error(err);
+
+      alert("Failed to load courses");
+
     }
+
   };
 
   return (
+
     <div className="container py-5">
-      <h1 className="text-center fw-bold mb-5">📚 Explore Courses</h1>
+
+      <h1 className="text-center mb-5">
+        📚 Explore Courses
+      </h1>
 
       <div className="row">
-        {courses.map((c) => (
-          <div className="col-md-4 mb-4" key={c._id}>
+
+        {courses.map((course) => {
+
+          const finalPrice =
+            course.discount > 0
+              ? course.price -
+                (course.price * course.discount) / 100
+              : course.price;
+
+          return (
+
             <div
-              className="card shadow border-0 h-100"
-              style={{
-                borderRadius: "15px",
-                overflow: "hidden",
-                cursor: "pointer",
-                transition: "0.3s",
-              }}
-              onClick={() => navigate(`/courses/${c._id}`)}
+              className="col-md-4 mb-4"
+              key={course._id}
             >
-              <img
-                src={
-                  c.image ||
-                  "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800"
-                }
-                alt={c.title}
+
+              <div
+                className="card shadow h-100"
                 style={{
-                  height: "220px",
-                  objectFit: "cover",
+                  cursor: "pointer",
+                  borderRadius: "15px",
                 }}
-              />
+                onClick={() =>
+                  navigate(`/courses/${course._id}`)
+                }
+              >
 
-              <div className="card-body">
-                <span className="badge bg-primary mb-2">
-                  {c.category || "Development"}
-                </span>
+                <img
+                  src={course.image}
+                  className="card-img-top"
+                  alt={course.title}
+                  style={{
+                    height: "220px",
+                    objectFit: "cover",
+                  }}
+                />
 
-                <h4 className="fw-bold text-dark">
-                  {c.title}
-                </h4>
+                <div className="card-body">
 
-                <p className="text-muted">
-                  {c.description}
-                </p>
+                  <span className="badge bg-primary mb-2">
+                    {course.category}
+                  </span>
 
-                <h5 className="text-warning">
-                  ⭐⭐⭐⭐⭐ {c.rating || 4.5}
-                </h5>
+                  <h4 className="card-title">
+                    {course.title}
+                  </h4>
 
-                <h3 className="text-success">
-                  ₹{c.price}
-                </h3>
+                  <p className="text-muted">
+                    {course.description}
+                  </p>
 
-                <button className="btn btn-primary w-100 mt-3">
-                  View Details
-                </button>
+                  <p>
+                    👨‍🏫 {course.instructor}
+                  </p>
+
+                  <p>
+                    ⭐ {course.rating}
+                  </p>
+
+                  {course.discount > 0 ? (
+
+                    <>
+
+                      <h6
+                        style={{
+                          textDecoration:
+                            "line-through",
+                          color: "#777",
+                          marginBottom: "4px",
+                        }}
+                      >
+                        ₹{course.price}
+                      </h6>
+
+                      <h3 className="text-success">
+                        ₹{finalPrice}
+                      </h3>
+
+                      <span className="badge bg-danger mb-3">
+                        🔥 {course.discount}% OFF
+                      </span>
+
+                    </>
+
+                  ) : (
+
+                    <h3 className="text-success">
+                      ₹{course.price}
+                    </h3>
+
+                  )}
+
+                  <button className="btn btn-primary w-100 mt-3">
+                    View Details
+                  </button>
+
+                </div>
+
               </div>
+
             </div>
-          </div>
-        ))}
+
+          );
+
+        })}
+
       </div>
+
     </div>
+
   );
+
 }

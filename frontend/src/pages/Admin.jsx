@@ -1,133 +1,187 @@
 import { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
 import axios from "axios";
-import * as XLSX from "xlsx";
-import { saveAs } from "file-saver";
 
 export default function Admin() {
 
-  // ================= USERS =================
-const user = JSON.parse(localStorage.getItem("user"));
-
-if (!user || user.role !== "admin") {
-  return <Navigate to="/" replace />;
-}
-  const [users, setUsers] = useState([]);
-  const [search, setSearch] = useState("");
-  const [editingId, setEditingId] = useState(null);
-
-  // ================= COURSES =================
+  // ===============================
+  // STATES
+  // ===============================
 
   const [courses, setCourses] = useState([]);
+  const [users, setUsers] = useState([]);
 
-  // ================= ADD COURSE STATES =================
+  const [loading, setLoading] = useState(true);
+
+  // Form States
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
+
   const [image, setImage] = useState("");
   const [category, setCategory] = useState("");
+
   const [instructor, setInstructor] = useState("");
   const [duration, setDuration] = useState("");
-  const [students, setStudents] = useState("");
-  const [rating, setRating] = useState("");
+
   const [language, setLanguage] = useState("");
   const [certificate, setCertificate] = useState("");
+
   const [videoUrl, setVideoUrl] = useState("");
-  const [whatYouLearn, setWhatYouLearn] = useState("");
-  const [courseContent, setCourseContent] = useState("");
+
+  // Edit Course
+
+  const [editingId, setEditingId] = useState(null);
+
+  // Token
+
+  const token = localStorage.getItem("token");
+
+  // ===============================
+  // PAGE LOAD
+  // ===============================
 
   useEffect(() => {
-    fetchUsers();
+
     fetchCourses();
+
+    fetchUsers();
+
   }, []);
 
-  // ================= FETCH USERS =================
-
-  const fetchUsers = async () => {
-    try {
-      const res = await axios.get(
-        "https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/auth/users"
-      );
-
-      setUsers(res.data);
-
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
-  // ================= FETCH COURSES =================
+  // ===============================
+  // FETCH COURSES
+  // ===============================
 
   const fetchCourses = async () => {
+
     try {
+
       const res = await axios.get(
+
         "https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/courses"
+
       );
 
       setCourses(res.data);
 
-    } catch (err) {
-      console.log(err);
     }
+
+    catch (err) {
+
+      console.log(err);
+
+    }
+
   };
-  const editCourse = (course) => {
-  setEditingId(course._id);
 
-  setTitle(course.title || "");
-  setDescription(course.description || "");
-  setPrice(course.price || "");
-  setImage(course.image || "");
-  setCategory(course.category || "");
-  setInstructor(course.instructor || "");
-  setDuration(course.duration || "");
-  setStudents(course.students || "");
-  setRating(course.rating || "");
-  setLanguage(course.language || "");
-  setCertificate(course.certificate || "");
-  setVideoUrl(course.videoUrl || "");
+  // ===============================
+  // FETCH USERS
+  // ===============================
 
-  setWhatYouLearn(
-    course.whatYouLearn ? course.whatYouLearn.join("\n") : ""
-  );
-
-  setCourseContent(
-    course.courseContent ? course.courseContent.join("\n") : ""
-  );
-};
-
-  // ================= ADD COURSE =================
-
-  const addCourse = async () => {
+  const fetchUsers = async () => {
 
     try {
 
-      await axios.post(
-        "https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/courses",
+      const res = await axios.get(
+
+        "https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/auth/users",
+
         {
-          title,
-          description,
-          price,
-          image,
-          category,
-          instructor,
-          duration,
-          students,
-          rating,
-          language,
-          certificate,
-          videoUrl,
-          whatYouLearn: whatYouLearn.split("\n"),
-          courseContent: courseContent.split("\n"),
-        },
-        {
+
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+
+            Authorization: `Bearer ${token}`,
+
           },
+
         }
+
       );
 
-      alert("Course Added Successfully");
+      setUsers(res.data);
+
+    }
+
+    catch (err) {
+
+      console.log(err);
+
+    }
+
+    finally {
+
+      setLoading(false);
+
+    }
+
+  };
+
+  // Loading Screen
+
+  if (loading) {
+
+    return (
+
+      <div className="text-center mt-5">
+
+        <h2>Loading Dashboard...</h2>
+
+      </div>
+
+    );
+
+  }
+  // ===============================
+  // ADD COURSE
+  // ===============================
+
+  const addCourse = async () => {
+
+    if (!title || !description || !price) {
+
+      alert("Please fill all required fields");
+
+      return;
+
+    }
+
+    try {
+
+      const newCourse = {
+
+        title,
+        description,
+        price,
+        image,
+        category,
+        instructor,
+        duration,
+        language,
+        certificate,
+        videoUrl,
+
+      };
+
+      await axios.post(
+
+        "https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/courses",
+
+        newCourse,
+
+        {
+
+          headers: {
+
+            Authorization: `Bearer ${token}`,
+
+          },
+
+        }
+
+      );
+
+      alert("✅ Course Added Successfully");
 
       fetchCourses();
 
@@ -138,28 +192,154 @@ if (!user || user.role !== "admin") {
       setCategory("");
       setInstructor("");
       setDuration("");
-      setStudents("");
-      setRating("");
       setLanguage("");
       setCertificate("");
       setVideoUrl("");
-      setWhatYouLearn("");
-      setCourseContent("");
 
-    }catch (err) {
-  console.log(err.response);
-  console.log(err.response?.data);
+    }
 
-  alert(JSON.stringify(err.response?.data));
-}
+    catch (err) {
+
+      console.log(err);
+
+      alert(
+
+        err.response?.data?.message ||
+
+        "Course Add Failed"
+
+      );
+
+    }
+
   };
 
-  // ================= DELETE COURSE =================
+  // ===============================
+  // EDIT COURSE
+  // ===============================
+
+  const editCourse = (course) => {
+
+    setEditingId(course._id);
+
+    setTitle(course.title);
+
+    setDescription(course.description);
+
+    setPrice(course.price);
+
+    setImage(course.image);
+
+    setCategory(course.category);
+
+    setInstructor(course.instructor);
+
+    setDuration(course.duration);
+
+    setLanguage(course.language);
+
+    setCertificate(course.certificate);
+
+    setVideoUrl(course.videoUrl);
+
+    window.scrollTo({
+
+      top: 0,
+
+      behavior: "smooth",
+
+    });
+
+  };
+
+  // ===============================
+  // UPDATE COURSE
+  // ===============================
+
+  const updateCourse = async () => {
+
+    if (!editingId) return;
+
+    try {
+
+      const updatedCourse = {
+
+        title,
+        description,
+        price,
+        image,
+        category,
+        instructor,
+        duration,
+        language,
+        certificate,
+        videoUrl,
+
+      };
+
+      await axios.put(
+
+        `https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/courses/${editingId}`,
+
+        updatedCourse,
+
+        {
+
+          headers: {
+
+            Authorization: `Bearer ${token}`,
+
+          },
+
+        }
+
+      );
+
+      alert("✅ Course Updated Successfully");
+
+      fetchCourses();
+
+      setEditingId(null);
+
+      setTitle("");
+      setDescription("");
+      setPrice("");
+      setImage("");
+      setCategory("");
+      setInstructor("");
+      setDuration("");
+      setLanguage("");
+      setCertificate("");
+      setVideoUrl("");
+
+    }
+
+    catch (err) {
+
+      console.log(err);
+
+      alert(
+
+        err.response?.data?.message ||
+
+        "Update Failed"
+
+      );
+
+    }
+
+  };
+
+  // ===============================
+  // DELETE COURSE
+  // ===============================
 
   const deleteCourse = async (id) => {
 
     const confirmDelete = window.confirm(
+
       "Are you sure you want to delete this course?"
+
     );
 
     if (!confirmDelete) return;
@@ -167,421 +347,971 @@ if (!user || user.role !== "admin") {
     try {
 
       await axios.delete(
+
         `https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/courses/${id}`,
+
         {
+
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+
+            Authorization: `Bearer ${token}`,
+
           },
+
         }
+
       );
 
-      alert("Course Deleted Successfully");
+      alert("✅ Course Deleted Successfully");
 
       fetchCourses();
 
-    } catch (err) {
-      console.log(err);
-      alert("Delete Failed");
     }
+
+    catch (err) {
+
+      console.log(err);
+
+      alert(
+
+        err.response?.data?.message ||
+
+        "Delete Failed"
+
+      );
+
+    }
+
   };
 
-  // ================= DELETE USER =================
+  // ===============================
+  // DOWNLOAD EXCEL REPORT
+  // ===============================
 
-  const deleteUser = async (id) => {
-
-    const confirmDelete = window.confirm(
-      "Delete this user?"
-    );
-
-    if (!confirmDelete) return;
+  const downloadExcelReport = async () => {
 
     try {
 
-      await axios.delete(
-        `https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/auth/users/${id}`
+      const response = await axios.get(
+
+        "https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/reports/excel",
+
+        {
+
+          responseType: "blob",
+
+        }
+
       );
 
-      alert("User Deleted Successfully");
+      const url = window.URL.createObjectURL(
 
-      fetchUsers();
+        new Blob([response.data])
 
-    } catch (err) {
-      console.log(err);
+      );
+
+      const link = document.createElement("a");
+
+      link.href = url;
+
+      link.download = "CourseHub_Report.xlsx";
+
+      document.body.appendChild(link);
+
+      link.click();
+
+      link.remove();
+
     }
+
+    catch (err) {
+
+      console.log(err);
+
+      alert("Failed to Download Excel Report");
+
+    }
+
   };
 
-  // ================= EXPORT EXCEL =================
+  // ===============================
+  // DOWNLOAD PDF REPORT
+  // ===============================
 
-  const exportExcel = () => {
+  const downloadPDFReport = async () => {
 
-    const worksheet = XLSX.utils.json_to_sheet(users);
+    try {
 
-    const workbook = XLSX.utils.book_new();
+      const response = await axios.get(
 
-    XLSX.utils.book_append_sheet(
-      workbook,
-      worksheet,
-      "Users"
-    );
+        "https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/reports/pdf",
 
-    const excelBuffer = XLSX.write(workbook, {
-      bookType: "xlsx",
-      type: "array",
-    });
+        {
 
-    const file = new Blob(
-      [excelBuffer],
-      {
-        type: "application/octet-stream",
-      }
-    );
+          responseType: "blob",
 
-    saveAs(file, "RegisteredUsers.xlsx");
+        }
+
+      );
+
+      const url = window.URL.createObjectURL(
+
+        new Blob([response.data])
+
+      );
+
+      const link = document.createElement("a");
+
+      link.href = url;
+
+      link.download = "CourseHub_Report.pdf";
+
+      document.body.appendChild(link);
+
+      link.click();
+
+      link.remove();
+
+    }
+
+    catch (err) {
+
+      console.log(err);
+
+      alert("Failed to Download PDF Report");
+
+    }
+
   };
+  // ===============================
+  // RETURN
+  // ===============================
 
-  const filteredUsers = users.filter((user) =>
-    user.name.toLowerCase().includes(search.toLowerCase())
-  );
+  return (
 
-  return (<div style={{ padding: "30px" }}>
+    <div
+      className="container-fluid"
+      style={{
+        background: "#f4f7fb",
+        minHeight: "100vh",
+        padding: "30px",
+      }}
+    >
 
-  <h1 style={{ marginBottom: "20px" }}>
-    Admin Dashboard
-  </h1>
+      {/* ===============================
+          HEADER
+      =============================== */}
 
-  <hr />
+      <div className="d-flex justify-content-between align-items-center mb-5">
 
-  <h2>Add New Course</h2>
+        <div>
 
-  <div
-    style={{
-      display: "grid",
-      gridTemplateColumns: "repeat(2,1fr)",
-      gap: "15px",
-      marginBottom: "20px",
-    }}
-  >
+          <h1 className="fw-bold">
+            📊 Admin Dashboard
+          </h1>
 
-    <input
-      type="text"
-      placeholder="Course Title"
-      value={title}
-      onChange={(e) => setTitle(e.target.value)}
-    />
+          <p className="text-muted">
+            Welcome Back Admin 👋
+          </p>
 
-    <input
-      type="number"
-      placeholder="Price"
-      value={price}
-      onChange={(e) => setPrice(e.target.value)}
-    />
+        </div>
 
-    <input
-      type="text"
-      placeholder="Image URL"
-      value={image}
-      onChange={(e) => setImage(e.target.value)}
-    />
+        <button
+          className="btn btn-primary btn-lg"
+          onClick={() =>
+            window.scrollTo({
+              top: 350,
+              behavior: "smooth",
+            })
+          }
+        >
+          ➕ Add Course
+        </button>
 
-    <input
-      type="text"
-      placeholder="Category"
-      value={category}
-      onChange={(e) => setCategory(e.target.value)}
-    />
+      </div>
 
-    <input
-      type="text"
-      placeholder="Instructor"
-      value={instructor}
-      onChange={(e) => setInstructor(e.target.value)}
-    />
+      {/* ===============================
+          DASHBOARD CARDS
+      =============================== */}
 
-    <input
-      type="text"
-      placeholder="Duration"
-      value={duration}
-      onChange={(e) => setDuration(e.target.value)}
-    />
+      <div className="row mb-5">
 
-    <input
-      type="number"
-      placeholder="Students"
-      value={students}
-      onChange={(e) => setStudents(e.target.value)}
-    />
+        <div className="col-lg-3 col-md-6 mb-4">
 
-    <input
-      type="number"
-      placeholder="Rating"
-      value={rating}
-      onChange={(e) => setRating(e.target.value)}
-    />
+          <div className="card shadow border-0 h-100">
 
-    <input
-      type="text"
-      placeholder="Language"
-      value={language}
-      onChange={(e) => setLanguage(e.target.value)}
-    />
+            <div className="card-body">
 
-    <input
-      type="text"
-      placeholder="Certificate (Yes/No)"
-      value={certificate}
-      onChange={(e) => setCertificate(e.target.value)}
-    />
+              <h6 className="text-muted">
+                👨‍🎓 Total Users
+              </h6>
 
-    <input
-      type="text"
-      placeholder="Video URL"
-      value={videoUrl}
-      onChange={(e) => setVideoUrl(e.target.value)}
-    />
+              <h2 className="fw-bold text-primary">
 
-    <textarea
-      rows="4"
-      placeholder="Description"
-      value={description}
-      onChange={(e) => setDescription(e.target.value)}
-    />
+                {users.length}
 
-    <textarea
-      rows="5"
-      placeholder="What You'll Learn (One item per line)"
-      value={whatYouLearn}
-      onChange={(e) => setWhatYouLearn(e.target.value)}
-    />
+              </h2>
 
-    <textarea
-      rows="5"
-      placeholder="Course Content (One item per line)"
-      value={courseContent}
-      onChange={(e) => setCourseContent(e.target.value)}
-    />
+            </div>
+
+          </div>
+
+        </div>
+
+        <div className="col-lg-3 col-md-6 mb-4">
+
+          <div className="card shadow border-0 h-100">
+
+            <div className="card-body">
+
+              <h6 className="text-muted">
+                📚 Total Courses
+              </h6>
+
+              <h2 className="fw-bold text-success">
+
+                {courses.length}
+
+              </h2>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <div className="col-lg-3 col-md-6 mb-4">
+
+          <div className="card shadow border-0 h-100">
+
+            <div className="card-body">
+
+              <h6 className="text-muted">
+                🏆 Certificates
+              </h6>
+
+              <h2 className="fw-bold text-warning">
+
+                128
+
+              </h2>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <div className="col-lg-3 col-md-6 mb-4">
+
+          <div className="card shadow border-0 h-100">
+
+            <div className="card-body">
+
+              <h6 className="text-muted">
+                💰 Revenue
+              </h6>
+
+              <h2 className="fw-bold text-danger">
+
+                ₹50,000
+
+              </h2>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+<div className="card shadow border-0 mb-5">
+
+  <div className="card-header bg-primary text-white">
+
+    <h3 className="mb-0">
+      ➕ Add New Course
+    </h3>
 
   </div>
 
-  <button
-    onClick={addCourse}
-    style={{
-      background: "green",
-      color: "white",
-      padding: "12px 30px",
-      border: "none",
-      borderRadius: "8px",
-      fontSize: "16px",
-      cursor: "pointer",
-      marginBottom: "40px",
-    }}
-  >
-    Add Course
-  </button>
+  <div className="card-body">
 
-  <hr />
-  {/* ================= ALL COURSES ================= */}
+    <div className="row">
 
-<h2 style={{ marginBottom: "20px" }}>
-  All Courses ({courses.length})
-</h2>
+      {/* Course Title */}
 
-<table
-  border="1"
-  cellPadding="10"
-  style={{
-    width: "100%",
-    borderCollapse: "collapse",
-    marginBottom: "40px",
-    textAlign: "center",
-  }}
->
-  <thead
-    style={{
-      background: "#0d6efd",
-      color: "white",
-    }}
-  >
-    <tr>
-      <th>Image</th>
-      <th>Title</th>
-      <th>Category</th>
-      <th>Instructor</th>
-      <th>Price</th>
-      <th>Rating</th>
-      <th>Students</th>
-      <th>Action</th>
-    </tr>
-  </thead>
+      <div className="col-md-6 mb-3">
 
-  <tbody>
-    {courses.map((course) => (
-      <tr key={course._id}>
+        <label className="form-label fw-bold">
+          Course Title
+        </label>
 
-        <td>
-          <img
-            src={course.image}
-            alt={course.title}
-            width="90"
-            height="60"
-            style={{
-              objectFit: "cover",
-              borderRadius: "8px",
-            }}
-          />
-        </td>
+        <input
+          type="text"
+          className="form-control"
+          placeholder="Enter Course Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
 
-        <td>{course.title}</td>
+      </div>
 
-        <td>{course.category}</td>
+      {/* Price */}
 
-        <td>{course.instructor}</td>
+      <div className="col-md-6 mb-3">
 
-        <td>₹ {course.price}</td>
+        <label className="form-label fw-bold">
+          Price
+        </label>
 
-        <td>⭐ {course.rating}</td>
+        <input
+          type="number"
+          className="form-control"
+          placeholder="Enter Price"
+          value={price}
+          onChange={(e) => setPrice(e.target.value)}
+        />
 
-        <td>{course.students}</td>
+      </div>
 
-        
-       <td>
+      {/* Description */}
 
-  <button
-    onClick={() => editCourse(course)}
-    style={{
-      background: "orange",
-      color: "white",
-      border: "none",
-      padding: "8px 15px",
-      borderRadius: "5px",
-      cursor: "pointer",
-      marginRight: "10px",
-    }}
-  >
-    Edit
-  </button>
+      <div className="col-md-12 mb-3">
 
-  <button
-    onClick={() => deleteCourse(course._id)}
-    style={{
-      background: "red",
-      color: "white",
-      border: "none",
-      padding: "8px 15px",
-      borderRadius: "5px",
-      cursor: "pointer",
-    }}
-  >
-    Delete
-  </button>
+        <label className="form-label fw-bold">
+          Description
+        </label>
 
-</td>
+        <textarea
+          rows="4"
+          className="form-control"
+          placeholder="Course Description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        ></textarea>
 
-      </tr>
-    ))}
-  </tbody>
-</table>
+      </div>
 
-<hr />
-{/* ================= USERS ================= */}
+      {/* Image */}
 
-<h2>Registered Users ({filteredUsers.length})</h2>
+      <div className="col-md-6 mb-3">
 
-<div
-  style={{
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "20px",
-  }}
->
-  <input
-    type="text"
-    placeholder="Search User..."
-    value={search}
-    onChange={(e) => setSearch(e.target.value)}
-    style={{
-      padding: "10px",
-      width: "300px",
-      borderRadius: "5px",
-      border: "1px solid #ccc",
-    }}
-  />
+        <label className="form-label fw-bold">
+          Image URL
+        </label>
 
-  <button
-    onClick={exportExcel}
-    style={{
-      background: "green",
-      color: "white",
-      border: "none",
-      padding: "10px 20px",
-      borderRadius: "5px",
-      cursor: "pointer",
-    }}
-  >
-    Export Excel
-  </button>
+        <input
+          type="text"
+          className="form-control"
+          placeholder="https://..."
+          value={image}
+          onChange={(e) => setImage(e.target.value)}
+        />
+
+      </div>
+
+      {/* Category */}
+
+      <div className="col-md-6 mb-3">
+
+        <label className="form-label fw-bold">
+          Category
+        </label>
+
+        <input
+          type="text"
+          className="form-control"
+          placeholder="Web Development"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+        />
+
+      </div>
+
+      {/* Instructor */}
+
+      <div className="col-md-6 mb-3">
+
+        <label className="form-label fw-bold">
+          Instructor
+        </label>
+
+        <input
+          type="text"
+          className="form-control"
+          placeholder="Instructor Name"
+          value={instructor}
+          onChange={(e) => setInstructor(e.target.value)}
+        />
+
+      </div>
+
+      {/* Duration */}
+
+      <div className="col-md-6 mb-3">
+
+        <label className="form-label fw-bold">
+          Duration
+        </label>
+
+        <input
+          type="text"
+          className="form-control"
+          placeholder="10 Hours"
+          value={duration}
+          onChange={(e) => setDuration(e.target.value)}
+        />
+
+      </div>
+      {/* Language */}
+
+      <div className="col-md-6 mb-3">
+
+        <label className="form-label fw-bold">
+          Language
+        </label>
+
+        <input
+          type="text"
+          className="form-control"
+          placeholder="English"
+          value={language}
+          onChange={(e) => setLanguage(e.target.value)}
+        />
+
+      </div>
+
+      {/* Certificate */}
+
+      <div className="col-md-6 mb-3">
+
+        <label className="form-label fw-bold">
+          Certificate
+        </label>
+
+        <select
+          className="form-select"
+          value={certificate}
+          onChange={(e) => setCertificate(e.target.value)}
+        >
+
+          <option value="">
+            Select
+          </option>
+
+          <option value="Yes">
+            Yes
+          </option>
+
+          <option value="No">
+            No
+          </option>
+
+        </select>
+
+      </div>
+
+      {/* Preview Video */}
+
+      <div className="col-md-12 mb-4">
+
+        <label className="form-label fw-bold">
+          Preview Video URL
+        </label>
+
+        <input
+          type="text"
+          className="form-control"
+          placeholder="https://youtube.com/..."
+          value={videoUrl}
+          onChange={(e) => setVideoUrl(e.target.value)}
+        />
+
+      </div>
+
+      {/* Save / Update Button */}
+
+      <div className="col-md-12">
+
+        {
+
+          editingId ? (
+
+            <button
+              className="btn btn-warning btn-lg"
+              onClick={updateCourse}
+            >
+
+              ✏ Update Course
+
+            </button>
+
+          ) : (
+
+            <button
+              className="btn btn-success btn-lg"
+              onClick={addCourse}
+            >
+
+              💾 Save Course
+
+            </button>
+
+          )
+
+        }
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+<div className="card shadow border-0 mb-5">
+
+  <div className="card-header bg-dark text-white">
+
+    <h3 className="mb-0">
+
+      📚 Manage Courses
+
+    </h3>
+
+  </div>
+
+  <div className="card-body">
+
+    <div className="table-responsive">
+
+      <table className="table table-hover table-bordered align-middle">
+
+        <thead className="table-primary">
+
+          <tr>
+
+            <th>#</th>
+
+            <th>Image</th>
+
+            <th>Title</th>
+
+            <th>Category</th>
+
+            <th>Instructor</th>
+
+            <th>Price</th>
+
+            <th>Students</th>
+
+            <th>Rating</th>
+
+            <th>Actions</th>
+
+          </tr>
+
+        </thead>
+
+        <tbody>
+
+          {
+
+            courses.length === 0 ?
+
+            (
+
+              <tr>
+
+                <td
+                  colSpan="9"
+                  className="text-center"
+                >
+
+                  No Courses Found
+
+                </td>
+
+              </tr>
+
+            )
+
+            :
+
+            (
+
+              courses.map((course, index) => (
+
+                <tr key={course._id}>
+
+                  <td>
+
+                    {index + 1}
+
+                  </td>
+
+                  <td>
+
+                    <img
+
+                      src={course.image}
+
+                      alt={course.title}
+
+                      width="90"
+
+                      height="60"
+
+                      style={{
+
+                        objectFit: "cover",
+
+                        borderRadius: "10px"
+
+                      }}
+
+                    />
+
+                  </td>
+
+                  <td>
+
+                    <strong>
+
+                      {course.title}
+
+                    </strong>
+
+                  </td>
+
+                  <td>
+
+                    {course.category}
+
+                  </td>
+
+                  <td>
+
+                    {course.instructor}
+
+                  </td>
+
+                  <td>
+
+                    ₹{course.price}
+
+                  </td>
+
+                  <td>
+
+                    {course.students || 0}
+
+                  </td>
+
+                  <td>
+
+                    ⭐ {course.rating || 0}
+
+                  </td>
+
+                  <td>
+
+                    <button
+
+                      className="btn btn-warning btn-sm me-2"
+
+                      onClick={() => editCourse(course)}
+
+                    >
+
+                      ✏ Edit
+
+                    </button>
+
+                    <button
+
+                      className="btn btn-danger btn-sm"
+
+                      onClick={() => deleteCourse(course._id)}
+
+                    >
+
+                      🗑 Delete
+
+                    </button>
+
+                  </td>
+
+                </tr>
+
+              ))
+
+            )
+
+          }
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+
+</div>
+<div className="card shadow border-0 mb-5">
+
+  <div className="card-header bg-success text-white">
+
+    <h3 className="mb-0">
+
+      📊 Report Center
+
+    </h3>
+
+  </div>
+
+  <div className="card-body">
+
+    <p className="text-muted mb-4">
+
+      Download Professional Reports of your LMS Platform.
+
+    </p>
+
+    <div className="row">
+
+      {/* Excel */}
+
+      <div className="col-lg-4 col-md-6 mb-4">
+
+        <div className="card border-primary shadow-sm h-100">
+
+          <div className="card-body text-center">
+
+            <h1>📥</h1>
+
+            <h5>Excel Report</h5>
+
+            <p className="text-muted">
+
+              Export all course data into Excel.
+
+            </p>
+
+            <button
+
+              className="btn btn-primary w-100"
+
+              onClick={downloadExcelReport}
+
+            >
+
+              Download Excel
+
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* PDF */}
+
+      <div className="col-lg-4 col-md-6 mb-4">
+
+        <div className="card border-danger shadow-sm h-100">
+
+          <div className="card-body text-center">
+
+            <h1>📄</h1>
+
+            <h5>PDF Report</h5>
+
+            <p className="text-muted">
+
+              Generate printable PDF Report.
+
+            </p>
+
+            <button
+
+              className="btn btn-danger w-100"
+
+              onClick={downloadPDFReport}
+
+            >
+
+              Download PDF
+
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* Analytics */}
+
+      <div className="col-lg-4 col-md-6 mb-4">
+
+        <div className="card border-success shadow-sm h-100">
+
+          <div className="card-body text-center">
+
+            <h1>📈</h1>
+
+            <h5>Analytics</h5>
+
+            <p className="text-muted">
+
+              Revenue, Students & Courses Summary.
+
+            </p>
+
+            <button
+
+              className="btn btn-success w-100"
+
+            >
+
+              View Analytics
+
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* Students */}
+
+      <div className="col-lg-4 col-md-6 mb-4">
+
+        <div className="card border-warning shadow-sm h-100">
+
+          <div className="card-body text-center">
+
+            <h1>👨‍🎓</h1>
+
+            <h5>Students Report</h5>
+
+            <p className="text-muted">
+
+              Export all registered students.
+
+            </p>
+
+            <button
+
+              className="btn btn-warning w-100"
+
+            >
+
+              Export Students
+
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* Courses */}
+
+      <div className="col-lg-4 col-md-6 mb-4">
+
+        <div className="card border-info shadow-sm h-100">
+
+          <div className="card-body text-center">
+
+            <h1>📚</h1>
+
+            <h5>Courses Report</h5>
+
+            <p className="text-muted">
+
+              Export all available courses.
+
+            </p>
+
+            <button
+
+              className="btn btn-info w-100"
+
+            >
+
+              Export Courses
+
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* Certificates */}
+
+      <div className="col-lg-4 col-md-6 mb-4">
+
+        <div className="card border-secondary shadow-sm h-100">
+
+          <div className="card-body text-center">
+
+            <h1>🏆</h1>
+
+            <h5>Certificates Report</h5>
+
+            <p className="text-muted">
+
+              Export issued certificates.
+
+            </p>
+
+            <button
+
+              className="btn btn-secondary w-100"
+
+            >
+
+              Export Certificates
+
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
 </div>
 
-<table
-  border="1"
-  cellPadding="10"
-  style={{
-    width: "100%",
-    borderCollapse: "collapse",
-    textAlign: "center",
-  }}
->
-  <thead
-    style={{
-      background: "#0d6efd",
-      color: "white",
-    }}
-  >
-    <tr>
-      <th>S.No</th>
-      <th>Name</th>
-      <th>Email</th>
-      <th>Role</th>
-      <th>Date</th>
-      <th>Action</th>
-    </tr>
-  </thead>
-
-  <tbody>
-    {filteredUsers.map((user, index) => (
-      <tr key={user._id}>
-        <td>{index + 1}</td>
-
-        <td>{user.name}</td>
-
-        <td>{user.email}</td>
-
-        <td>{user.role}</td>
-
-        <td>
-          {new Date(user.createdAt).toLocaleDateString()}
-        </td>
-
-        <td>
-          <button
-            onClick={() => deleteUser(user._id)}
-            style={{
-              background: "red",
-              color: "white",
-              border: "none",
-              padding: "8px 15px",
-              borderRadius: "5px",
-              cursor: "pointer",
-            }}
-          >
-            Delete
-          </button>
-        </td>
-      </tr>
-    ))}
-  </tbody>
-</table>
-
 </div>
-);
+
+  );
+
 }
+
+{/* ===============================
+      REPORT CENTER STARTS HERE
+=============================== */}
+
+{/* ===============================
+    MANAGE COURSES STARTS HERE
+=============================== */}
+
+      {/* ===============================
+          ADD COURSE SECTION STARTS HERE
+      =============================== */}
+  // ===== PART 3 STARTS HERE =====
+
+  // ===== PART 2 STARTS HERE =====

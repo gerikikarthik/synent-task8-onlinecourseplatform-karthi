@@ -6,7 +6,6 @@ import html2canvas from "html2canvas";
 import QRCode from "react-qr-code";
 
 export default function Certificate() {
-
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -15,88 +14,64 @@ export default function Certificate() {
   const [certificate, setCertificate] = useState(null);
 
   useEffect(() => {
+    fetchCourse();
 
-    getCourse();
-
-    const storedUser = JSON.parse(
-      localStorage.getItem("user")
-    );
-
+    const storedUser = JSON.parse(localStorage.getItem("user"));
     setUser(storedUser);
 
     generateCertificate();
-
   }, []);
 
-  // ===========================
-  // GET COURSE
-  // ===========================
+  // ==========================
+  // Fetch Course
+  // ==========================
 
-  const getCourse = async () => {
-
+  const fetchCourse = async () => {
     try {
-
       const res = await axios.get(
         `https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/courses/${id}`
       );
 
       setCourse(res.data);
-
     } catch (err) {
-
       console.log(err);
-
     }
-
   };
-  // ===========================
-  // GENERATE CERTIFICATE
-  // ===========================
+
+  // ==========================
+  // Generate Certificate
+  // ==========================
 
   const generateCertificate = async () => {
-
     try {
-
       const token = localStorage.getItem("token");
 
       const res = await axios.post(
-
         `https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/certificate/${id}`,
-
         {},
-
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
-
       );
 
       setCertificate(res.data);
-
-      // Redirect to AI Roadmap after 3 seconds
-    
-
     } catch (err) {
-
-      console.error("Certificate Error:", err);
+      console.log(err);
 
       alert(
         err.response?.data?.message ||
-        "Certificate generation failed"
+          "Certificate Generation Failed"
       );
-
     }
-
   };
 
-  // ===========================
-  // DOWNLOAD CERTIFICATE PDF
-  // ===========================
+  // ==========================
+  // Download PDF
+  // ==========================
 
   const downloadCertificate = () => {
-
     const input = document.getElementById("certificate");
 
     html2canvas(input, {
@@ -104,14 +79,9 @@ export default function Certificate() {
       useCORS: true,
       backgroundColor: "#ffffff",
     }).then((canvas) => {
-
       const imgData = canvas.toDataURL("image/png");
 
-      const pdf = new jsPDF(
-        "landscape",
-        "mm",
-        "a4"
-      );
+      const pdf = new jsPDF("landscape", "mm", "a4");
 
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -125,354 +95,423 @@ export default function Certificate() {
         pdfHeight
       );
 
-      pdf.save(
-        `${course.title}-Certificate.pdf`
-      );
-
+      pdf.save(`${course.title}-Certificate.pdf`);
     });
-
   };
 
-  // ===========================
-  // LOADING
-  // ===========================
+  // ==========================
+  // Loading
+  // ==========================
 
   if (!course || !user) {
-
     return (
       <div className="container mt-5 text-center">
         <h2>Loading...</h2>
       </div>
     );
-
   }
-return (
-  <div
-    className="container py-5"
-    style={{
-      background: "#eef2f7",
-      minHeight: "100vh",
-    }}
-  >
-
-    <div className="alert alert-success text-center mb-4">
-
-      <h4>🎉 Certificate Generated Successfully!</h4>
-
-      <p className="mb-0">
-        🤖 Redirecting to your AI Career Roadmap in
-        <strong> 3 seconds...</strong>
-      </p>
-
-    </div>
-
+  return (
     <div
-      id="certificate"
       style={{
-        width: "950px",
-        margin: "auto",
-        padding: "35px",
-        border: "15px solid #c9a227",
-        borderRadius: "20px",
+        minHeight: "100vh",
         background:
-          "linear-gradient(135deg,#fffdf5,#fef9e7,#fffdf5)",
-        boxShadow: "0 0 30px rgba(0,0,0,.25)",
-        textAlign: "center",
-        position: "relative",
-        overflow: "hidden",
+          "linear-gradient(135deg,#edf2f7,#f8fafc,#eef5ff)",
+        padding: "50px 0",
       }}
     >
-
-      {/* Watermark */}
+      {/* Success Message */}
 
       <div
+        className="alert alert-success text-center"
         style={{
-          position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%,-50%)",
-          fontSize: "140px",
-          fontWeight: "bold",
-          color: "#d4af37",
-          opacity: 0.05,
-          userSelect: "none",
+          width: "980px",
+          margin: "0 auto 30px",
+          borderRadius: "12px",
         }}
       >
-        COURSEHUB
-      </div>
+        <h4>🎉 Certificate Generated Successfully!</h4>
 
-      <img
-        src="/logo.png"
-        alt="CourseHub Logo"
-        style={{
-          width: "100px",
-          marginBottom: "15px",
-        }}
-      />
-
-      <h1
-        style={{
-          fontFamily: "Cinzel",
-          fontSize: "46px",
-          color: "#0b3d91",
-          letterSpacing: "5px",
-          marginBottom: "5px",
-        }}
-      >
-        COURSEHUB
-      </h1>
-
-      <p
-        style={{
-          color: "#777",
-          fontSize: "18px",
-          fontStyle: "italic",
-          marginBottom: "25px",
-        }}
-      >
-        Empowering Future Professionals
-      </p>
-
-      <h2
-        style={{
-          fontFamily: "Cinzel",
-          color: "#c79a00",
-          letterSpacing: "6px",
-          fontSize: "34px",
-          marginBottom: "30px",
-        }}
-      >
-        CERTIFICATE OF COMPLETION
-      </h2>
-
-      <hr
-        style={{
-          width: "70%",
-          margin: "25px auto",
-        }}
-      />
-
-      <p style={{ fontSize: "22px" }}>
-        This Certificate is Proudly Presented To
-      </p>
-
-      <h1
-        style={{
-          fontFamily: "Great Vibes",
-          fontSize: "58px",
-          color: "#1565c0",
-          margin: "20px 0",
-        }}
-      >
-        {user.name}
-      </h1>
-
-      <p
-        style={{
-          fontSize: "22px",
-          marginTop: "25px",
-        }}
-      >
-        For Successfully Completing
-      </p>
-
-      <h2
-        style={{
-          fontFamily: "Cinzel",
-          color: "#222",
-          fontSize: "30px",
-        }}
-      >
-        {course.title}
-      </h2>
-
-      <br />
-
-      <p
-        style={{
-          fontSize: "20px",
-          lineHeight: "35px",
-        }}
-      >
-        Congratulations on successfully completing the course.
-        <br />
-        We wish you continued success in your learning journey
-        and future career.
-      </p>
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginTop: "30px",
-      }}
-    >
-
-      {/* QR Code */}
-
-      <div style={{ textAlign: "center" }}>
-
-        {certificate && (
-          <QRCode
-            value={`https://synent-task8-onlinecourseplatform-karthi.vercel.app/verify-certificate/${certificate.certificateId}`}
-            size={75}
-            bgColor="#ffffff"
-            fgColor="#000000"
-          />
-        )}
-
-        <p
-          style={{
-            marginTop: "10px",
-            fontSize: "14px",
-          }}
-        >
-          Verify Certificate
+        <p className="mb-0">
+          Congratulations! Your certificate is ready.
         </p>
-
       </div>
 
-      {/* Certificate Details */}
-
-      <div style={{ textAlign: "center" }}>
-
-        <strong>Date Issued</strong>
-
-        <br />
-
-        {new Date().toLocaleDateString()}
-
-        <br />
-        <br />
-
-        <strong>Certificate ID</strong>
-
-        <br />
-
-        <span
-          style={{
-            color: "#0b3d91",
-            fontWeight: "bold",
-            fontSize: "18px",
-          }}
-        >
-          {certificate
-            ? certificate.certificateId
-            : "Generating..."}
-        </span>
-
-      </div>
-
-      {/* Signature */}
+      {/* ================= Certificate ================= */}
 
       <div
+        id="certificate"
         style={{
-          textAlign: "center",
-          width: "180px",
+          width: "1100px",
+          minHeight: "760px",
+          margin: "auto",
+          padding: "55px",
+          position: "relative",
+          overflow: "hidden",
+
+          background:
+            "linear-gradient(135deg,#fffef8,#fff9e8,#fffefb)",
+
+          border: "16px solid #d4af37",
+          borderRadius: "18px",
+
+          boxShadow:
+            "0 20px 60px rgba(0,0,0,.18)",
         }}
       >
+        {/* Inner Border */}
 
-        <strong
+        <div
           style={{
-            fontSize: "20px",
-            color: "#222",
+            position: "absolute",
+            inset: "18px",
+            border: "2px solid #e7c55c",
+            borderRadius: "10px",
+            pointerEvents: "none",
+          }}
+        />
+
+        {/* Watermark */}
+
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+
+            backgroundImage:
+              "url('/images/Logo.jpeg')",
+
+            backgroundRepeat: "no-repeat",
+
+            backgroundPosition: "center",
+
+            backgroundSize: "430px",
+
+            opacity: 0.035,
+
+            pointerEvents: "none",
+          }}
+        />
+
+        {/* Decorative Corners */}
+
+        <div
+          style={{
+            position: "absolute",
+            top: "18px",
+            left: "22px",
+            fontSize: "56px",
+            color: "#d4af37",
           }}
         >
-          Karthik G
-        </strong>
+          ❦
+        </div>
 
-        <br />
-
-        <span
+        <div
           style={{
-            fontSize: "15px",
-            color: "#666",
+            position: "absolute",
+            top: "18px",
+            right: "22px",
+            fontSize: "56px",
+            color: "#d4af37",
+            transform: "scaleX(-1)",
           }}
         >
-          Founder & CEO
-        </span>
+          ❦
+        </div>
 
-        <br />
-
-        <span
+        <div
           style={{
-            fontSize: "17px",
-            color: "#1565c0",
-            fontWeight: "bold",
+            position: "absolute",
+            bottom: "18px",
+            left: "22px",
+            fontSize: "56px",
+            color: "#d4af37",
+            transform: "rotate(180deg)",
           }}
         >
-          CourseHub
-        </span>
+          ❦
+        </div>
 
+        <div
+          style={{
+            position: "absolute",
+            bottom: "18px",
+            right: "22px",
+            fontSize: "56px",
+            color: "#d4af37",
+            transform:
+              "rotate(180deg) scaleX(-1)",
+          }}
+        >
+          ❦
+        </div>
+
+        {/* Main Content */}
+
+        <div
+          style={{
+            position: "relative",
+            zIndex: 5,
+            textAlign: "center",
+          }}
+        >
+          <h1
+            style={{
+              fontFamily: "Cinzel",
+              fontSize: "58px",
+              color: "#0b3d91",
+              letterSpacing: "6px",
+              marginBottom: "8px",
+            }}
+          >
+            COURSEHUB
+          </h1>
+
+          <p
+            style={{
+              fontSize: "20px",
+              color: "#666",
+              fontStyle: "italic",
+            }}
+          >
+            Empowering Future Professionals
+          </p>
+
+          <h2
+            style={{
+              fontFamily: "Cinzel",
+              fontSize: "38px",
+              color: "#c79a00",
+              letterSpacing: "8px",
+              marginTop: "30px",
+            }}
+          >
+            CERTIFICATE OF COMPLETION
+          </h2>
+
+          <hr
+            style={{
+              width: "70%",
+              margin: "25px auto 35px",
+              border: "1px solid #e5cf7d",
+            }}
+          />
+          <p
+            style={{
+              fontSize: "26px",
+              color: "#444",
+              marginBottom: "15px",
+            }}
+          >
+            This Certificate is Proudly Presented To
+          </p>
+
+          <h1
+            style={{
+              fontFamily: "'Brush Script MT', cursive",
+              fontSize: "70px",
+              color: "#1565c0",
+              fontWeight: "normal",
+              margin: "15px 0 25px",
+            }}
+          >
+            {user.name}
+          </h1>
+
+          <p
+            style={{
+              fontSize: "24px",
+              color: "#444",
+              marginBottom: "15px",
+            }}
+          >
+            For Successfully Completing
+          </p>
+
+          <h2
+            style={{
+              fontFamily: "Cinzel",
+              fontSize: "38px",
+              color: "#222",
+              fontWeight: "bold",
+              marginBottom: "25px",
+            }}
+          >
+            {course.title}
+          </h2>
+
+          <p
+            style={{
+              width: "78%",
+              margin: "auto",
+              fontSize: "21px",
+              lineHeight: "38px",
+              color: "#444",
+            }}
+          >
+            This certificate is proudly awarded in recognition of your
+            outstanding dedication, commitment, and successful completion of
+            the course requirements. We appreciate your passion for learning
+            and wish you continued success in your professional career.
+          </p>
+
+          {/* Bottom Section */}
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-end",
+              marginTop: "70px",
+            }}
+          >
+            {/* QR Code */}
+
+            <div style={{ textAlign: "center", width: "220px" }}>
+              {certificate && (
+                <QRCode
+                  value={`https://synent-task8-onlinecourseplatform-karthi.vercel.app/verify-certificate/${certificate.certificateId}`}
+                  size={100}
+                />
+              )}
+
+              <p
+                style={{
+                  marginTop: "12px",
+                  fontWeight: "bold",
+                  fontSize: "16px",
+                }}
+              >
+                Scan to Verify
+              </p>
+            </div>
+
+            {/* Certificate Details */}
+
+            <div
+              style={{
+                textAlign: "center",
+                flex: 1,
+              }}
+            >
+              <h4
+                style={{
+                  color: "#0b3d91",
+                  marginBottom: "10px",
+                }}
+              >
+                Certificate ID
+              </h4>
+
+              <div
+                style={{
+                  color: "#1565c0",
+                  fontWeight: "bold",
+                  fontSize: "26px",
+                  marginBottom: "30px",
+                }}
+              >
+                {certificate
+                  ? certificate.certificateId
+                  : "Generating..."}
+              </div>
+
+              <h4
+                style={{
+                  color: "#0b3d91",
+                  marginBottom: "10px",
+                }}
+              >
+                Date Issued
+              </h4>
+
+              <div
+                style={{
+                  fontSize: "24px",
+                  fontWeight: "600",
+                  color: "#333",
+                }}
+              >
+                {new Date().toLocaleDateString()}
+              </div>
+            </div>
+            {/* Premium Gold Seal */}
+
+            <div
+              style={{
+                position: "absolute",
+                right: "45px",
+                bottom: "45px",
+                width: "110px",
+                height: "110px",
+                borderRadius: "50%",
+                background:
+                  "radial-gradient(circle,#FFD700,#D4AF37,#B8860B)",
+                border: "5px solid #fff",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                textAlign: "center",
+                color: "#fff",
+                fontWeight: "bold",
+                fontSize: "13px",
+                lineHeight: "20px",
+                boxShadow: "0 10px 25px rgba(0,0,0,.25)",
+              }}
+            >
+              <div>
+                COURSEHUB
+                <br />
+                ★★★★★
+                <br />
+                CERTIFIED
+              </div>
+            </div>
+
+          </div>
+        </div>
       </div>
 
-    </div>
+      {/* Buttons */}
 
-    {/* Gold Seal */}
+      <div
+        className="text-center mt-5"
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          gap: "20px",
+          flexWrap: "wrap",
+        }}
+      >
+        <button
+          className="btn btn-success btn-lg"
+          onClick={downloadCertificate}
+        >
+          📄 Download PDF
+        </button>
 
-    <div
-      style={{
-        position: "absolute",
-        right: "25px",
-        bottom: "25px",
-        width: "75px",
-        height: "75px",
-        borderRadius: "50%",
-        background: "#d4af37",
-        color: "#fff",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        textAlign: "center",
-        fontWeight: "bold",
-        boxShadow: "0 0 15px rgba(0,0,0,.3)",
-        fontSize: "16px",
-      }}
-    >
-      <div>
-        COURSEHUB
-        <br />
-        CERTIFIED
+        <button
+          className="btn btn-primary btn-lg"
+          onClick={() => window.print()}
+        >
+          🖨 Print Certificate
+        </button>
+
+        <button
+          className="btn btn-warning btn-lg"
+          onClick={() =>
+            navigate("/ai-roadmap", {
+              state: {
+                career: course.title,
+                experience: "Beginner",
+                dailyTime: "2 Hours",
+              },
+            })
+          }
+        >
+          🤖 Generate AI Roadmap
+        </button>
       </div>
     </div>
-
-  </div>
-
-  {/* Buttons */}
-
-  <div className="text-center mt-5">
-
-    <button
-      className="btn btn-success btn-lg me-3"
-      onClick={downloadCertificate}
-    >
-      📄 Download PDF
-    </button>
-
-    <button
-      className="btn btn-primary btn-lg me-3"
-      onClick={() => window.print()}
-    >
-      🖨 Print Certificate
-    </button>
-<button
-  className="btn btn-warning btn-lg"
-  onClick={() =>
-    navigate("/ai-roadmap", {
-      state: {
-        career: course.title,
-        experience: "Beginner",
-        dailyTime: "2 Hours",
-      },
-    })
-  }
->
-  🤖 Generate AI Roadmap
-</button>
-   
-  </div>
-
-</div>
-
-);
+  );
 }

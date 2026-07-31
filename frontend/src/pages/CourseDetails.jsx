@@ -34,35 +34,37 @@ export default function CourseDetails() {
   // ===============================
   // ADD TO CART
   // ===============================
+const handleAddToCart = async () => {
+  try {
+    const token = localStorage.getItem("token");
 
-  const handleAddToCart = async () => {
-    try {
-      const token = localStorage.getItem("token");
-
-      await axios.post(
-        "https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/cart",
-        {
-          courseId: course._id,
+    await axios.post(
+      "https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/cart",
+      {
+        courseId: course._id,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      }
+    );
 
-      alert("✅ Course added to cart successfully.");
-    } catch (err) {
-      console.log(err);
+    alert("✅ Course added to cart successfully.");
 
-      alert(
-        err.response?.data?.message ||
-          "Unable to add course to cart."
-      );
-    }
-  };
+    // Automatically open Cart page
+    navigate("/cart");
 
-  // ===============================
+  } catch (err) {
+    console.log(err);
+
+    alert(
+      err.response?.data?.message ||
+      "Unable to add course to cart."
+    );
+  }
+};
+   // ===============================
   // ENROLL NOW
   // ===============================
 

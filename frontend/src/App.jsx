@@ -1,21 +1,22 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
+import Navbar from "./components/Navbar";
+
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Courses from "./pages/Courses";
-import Navbar from "./components/Navbar";
-import AddCourse from "./pages/AddCourse";
 import CourseDetails from "./pages/CourseDetails";
-import Admin from "./pages/Admin";
+import Cart from "./pages/Cart";
 import MyCourses from "./pages/MyCourses";
 import LearnCourse from "./pages/LearnCourse";
-import AIRoadmap from "./pages/AIRoadmap";
 import Certificate from "./pages/Certificate";
-import VerifyCertificate from "./pages/VerifyCertificate";
-import ExploreCourses from "./pages/ExploreCourses";
-import Cart from "./pages/Cart";
-import { Toaster } from "sonner";
+import AIRoadmap from "./pages/AIRoadmap";
+import AddCourse from "./pages/AddCourse";
+import Admin from "./pages/Admin";
+
+import ProtectedRoute from "./routes/ProtectedRoute";
+import AdminRoute from "./routes/AdminRoute";
 
 export default function App() {
   return (
@@ -23,43 +24,94 @@ export default function App() {
       <Navbar />
 
       <Routes>
+        {/* Public Routes */}
         <Route path="/" element={<Home />} />
-
         <Route path="/login" element={<Login />} />
-
         <Route path="/register" element={<Register />} />
 
-        <Route path="/courses" element={<Courses />} />
+        {/* Protected Routes */}
+        <Route
+          path="/courses"
+          element={
+            <ProtectedRoute>
+              <Courses />
+            </ProtectedRoute>
+          }
+        />
 
-        <Route path="/add-course" element={<AddCourse />} />
+        <Route
+          path="/courses/:id"
+          element={
+            <ProtectedRoute>
+              <CourseDetails />
+            </ProtectedRoute>
+          }
+        />
 
-        <Route path="/courses/:id" element={<CourseDetails />} />
+        <Route
+          path="/cart"
+          element={
+            <ProtectedRoute>
+              <Cart />
+            </ProtectedRoute>
+          }
+        />
 
-        <Route path="/admin" element={<Admin />} />
-<Route path="/cart" element={<Cart />} />
+        <Route
+          path="/mycourses"
+          element={
+            <ProtectedRoute>
+              <MyCourses />
+            </ProtectedRoute>
+          }
+        />
 
-        <Route path="/my-courses" element={<MyCourses />} />
+        <Route
+          path="/learn/:id"
+          element={
+            <ProtectedRoute>
+              <LearnCourse />
+            </ProtectedRoute>
+          }
+        />
 
-        <Route path="/learn/:id" element={<LearnCourse />} />
-
-        <Route path="/ai-roadmap" element={<AIRoadmap />} />
-<Route path="/explore/:category" element={<ExploreCourses />} />
-<Route
-  path="/verify-certificate/:certificateId"
-  element={<VerifyCertificate />}
-/>
         <Route
           path="/certificate/:id"
-          element={<Certificate />}
+          element={
+            <ProtectedRoute>
+              <Certificate />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/ai-roadmap"
+          element={
+            <ProtectedRoute>
+              <AIRoadmap />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Admin Routes */}
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <Admin />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/add-course"
+          element={
+            <AdminRoute>
+              <AddCourse />
+            </AdminRoute>
+          }
         />
       </Routes>
-
-      <Toaster
-        richColors
-        position="top-right"
-        expand={true}
-        closeButton
-      />
     </BrowserRouter>
   );
 }

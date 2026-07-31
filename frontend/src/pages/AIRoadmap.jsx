@@ -308,7 +308,7 @@ const downloadRoadmap = () => {
 
             <button
               className="btn btn-success btn-lg me-3"
-              onClick={() => navigate("/my-courses")}
+              onClick={() => navigate("/mycourses")}
             >
               📚 Back to My Courses
             </button>

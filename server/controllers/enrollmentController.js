@@ -14,7 +14,6 @@ const enrollCourse = async (req, res) => {
       });
     }
 
-    // Check if already enrolled
     const existingEnrollment = await Enrollment.findOne({
       user: req.user.id,
       course: courseId,
@@ -27,7 +26,6 @@ const enrollCourse = async (req, res) => {
       });
     }
 
-    // Create enrollment
     const enrollment = await Enrollment.create({
       user: req.user.id,
       course: courseId,
@@ -40,12 +38,14 @@ const enrollCourse = async (req, res) => {
       message: "Course enrolled successfully",
       enrollment,
     });
+
   } catch (err) {
-    console.log(err);
+    console.error("Enrollment Error:", err);
 
     res.status(500).json({
       success: false,
-      message: "Server Error",
+      message: err.message,
+      stack: err.stack,
     });
   }
 };
@@ -63,12 +63,14 @@ const getMyCourses = async (req, res) => {
       success: true,
       courses,
     });
+
   } catch (err) {
-    console.log(err);
+    console.error("Enrollment Error:", err);
 
     res.status(500).json({
       success: false,
-      message: "Server Error",
+      message: err.message,
+      stack: err.stack,
     });
   }
 };

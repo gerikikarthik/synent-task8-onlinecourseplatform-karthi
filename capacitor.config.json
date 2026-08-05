@@ -1,5 +1,5 @@
 {
-  "appId": "com.coursehub.app",
+  "appId": "com.karthik.coursehub",
   "appName": "CourseHub",
   "webDir": "frontend/dist"
 }

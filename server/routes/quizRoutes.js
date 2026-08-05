@@ -32,14 +32,6 @@ router.get("/test", (req, res) => {
 // Debug Route
 // GET /api/quiz/check/:courseId
 // =======================
-router.get("/check/:courseId", (req, res) => {
-
-  res.json({
-    success: true,
-    courseId: req.params.courseId
-  });
-
-});
 
 
 

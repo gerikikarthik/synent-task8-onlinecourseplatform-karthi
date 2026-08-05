@@ -38,14 +38,12 @@ const enrollCourse = async (req, res) => {
       message: "Course enrolled successfully",
       enrollment,
     });
-
   } catch (err) {
     console.error("Enrollment Error:", err);
 
     res.status(500).json({
       success: false,
       message: err.message,
-      stack: err.stack,
     });
   }
 };
@@ -63,14 +61,12 @@ const getMyCourses = async (req, res) => {
       success: true,
       courses,
     });
-
   } catch (err) {
     console.error("Enrollment Error:", err);
 
     res.status(500).json({
       success: false,
       message: err.message,
-      stack: err.stack,
     });
   }
 };
@@ -88,7 +84,6 @@ const getAllEnrollments = async (req, res) => {
       success: true,
       enrollments,
     });
-
   } catch (err) {
     console.error("Get All Enrollments Error:", err);
 

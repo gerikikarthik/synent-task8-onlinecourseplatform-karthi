@@ -6,6 +6,7 @@ const authMiddleware = require("../middleware/authMiddleware");
 const {
   enrollCourse,
   getMyCourses,
+getAllEnrollments,
 } = require("../controllers/enrollmentController");
 
 // ===============================

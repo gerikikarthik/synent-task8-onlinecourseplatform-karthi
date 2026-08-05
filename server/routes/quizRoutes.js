@@ -1,72 +1,80 @@
-
 const express = require("express");
 const router = express.Router();
 
 const authMiddleware = require("../middleware/authMiddleware");
+const adminMiddleware = require("../middleware/adminMiddleware");
 
 
 const {
   createQuiz,
   getQuizByCourse,
-  submitQuiz,
-  generateAIQuiz
+  submitQuiz
 } = require("../controllers/quizController");
 
 
 
-// TEST
-router.get("/test",(req,res)=>{
+// ===============================
+// TEST ROUTE
+// GET /api/quiz/test
+// ===============================
+router.get(
+  "/test",
+  (req,res)=>{
 
     res.json({
-        success:true,
-        message:"Quiz route working"
+
+      success:true,
+
+      message:"Quiz route working"
+
     });
 
-});
-
-
-
-
-// AI GENERATE QUIZ
-
-router.post(
-    "/generate/:courseId",
-    authMiddleware,
-    generateAIQuiz
+  }
 );
 
 
 
 
-// CREATE QUIZ
 
+// ===============================
+// CREATE QUIZ (ADMIN)
+// POST /api/quiz/create
+// ===============================
 router.post(
-    "/",
-    authMiddleware,
-    createQuiz
+  "/create",
+  authMiddleware,
+  adminMiddleware,
+  createQuiz
 );
 
 
 
 
-// SUBMIT QUIZ
 
-router.post(
-    "/submit",
-    authMiddleware,
-    submitQuiz
-);
-
-
-
-
-// GET QUIZ
-
+// ===============================
+// GET QUIZ BY COURSE
+// GET /api/quiz/:courseId
+// ===============================
 router.get(
-    "/:courseId",
-    authMiddleware,
-    getQuizByCourse
+  "/:courseId",
+  authMiddleware,
+  getQuizByCourse
 );
+
+
+
+
+
+// ===============================
+// SUBMIT QUIZ
+// POST /api/quiz/submit
+// ===============================
+router.post(
+  "/submit",
+  authMiddleware,
+  submitQuiz
+);
+
 
 
 

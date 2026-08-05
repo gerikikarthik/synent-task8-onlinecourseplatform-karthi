@@ -27,5 +27,9 @@ router.get(
   authMiddleware,
   getMyCourses
 );
-
+router.get(
+  "/all",
+  authMiddleware,
+  getAllEnrollments
+);
 module.exports = router;

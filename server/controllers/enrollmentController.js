@@ -75,7 +75,32 @@ const getMyCourses = async (req, res) => {
   }
 };
 
+// ===============================
+// GET ALL ENROLLMENTS (ADMIN)
+// ===============================
+const getAllEnrollments = async (req, res) => {
+  try {
+    const enrollments = await Enrollment.find()
+      .populate("user", "name email")
+      .populate("course", "title price");
+
+    res.json({
+      success: true,
+      enrollments,
+    });
+
+  } catch (err) {
+    console.error("Get All Enrollments Error:", err);
+
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
 module.exports = {
   enrollCourse,
   getMyCourses,
+  getAllEnrollments,
 };

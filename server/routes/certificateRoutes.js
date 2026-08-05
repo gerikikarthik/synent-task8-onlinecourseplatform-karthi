@@ -6,7 +6,10 @@ const User = require("../models/User");
 const Course = require("../models/Course");
 const protect = require("../middleware/authMiddleware");
 
-// Generate Certificate
+// ======================================
+// GENERATE CERTIFICATE
+// POST /api/certificate/:courseId
+// ======================================
 router.post("/:courseId", protect, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -14,32 +17,29 @@ router.post("/:courseId", protect, async (req, res) => {
 
     if (!course) {
       return res.status(404).json({
+        success: false,
         message: "Course not found",
       });
     }
 
-    // Already Generated?
     const already = await Certificate.findOne({
       userId: user._id,
       courseId: course._id,
     });
 
     if (already) {
-      return res.json(already);
+      return res.json({
+        success: true,
+        certificate: already,
+      });
     }
 
-    // Generate Professional Certificate ID
     const year = new Date().getFullYear();
-
-    const code = course.title
-      .substring(0, 3)
-      .toUpperCase();
-
+    const code = course.title.substring(0, 3).toUpperCase();
     const random = Math.floor(1000 + Math.random() * 9000);
 
     const certificateId = `CH-${code}-${year}-${random}`;
 
-    // Save Certificate
     const certificate = await Certificate.create({
       userId: user._id,
       courseId: course._id,
@@ -48,12 +48,41 @@ router.post("/:courseId", protect, async (req, res) => {
       certificateId,
     });
 
-    res.status(201).json(certificate);
+    res.status(201).json({
+      success: true,
+      certificate,
+    });
 
   } catch (err) {
-    console.error("Certificate Error:", err);
+    console.error(err);
 
     res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+});
+
+// ======================================
+// GET ALL CERTIFICATES (ADMIN)
+// GET /api/certificate/all
+// ======================================
+router.get("/all", protect, async (req, res) => {
+  try {
+    const certificates = await Certificate.find()
+      .populate("userId", "name email")
+      .populate("courseId", "title");
+
+    res.json({
+      success: true,
+      certificates,
+    });
+
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      success: false,
       message: err.message,
     });
   }

@@ -3,67 +3,71 @@ import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 
 
+const API =
+  "https://synent-task8-onlinecourseplatform-karthi.onrender.com/api";
+
+
 export default function Quiz() {
 
   const { id } = useParams();
+
   const navigate = useNavigate();
 
 
-  const [questions, setQuestions] = useState([]);
+  const [questions,setQuestions] = useState([]);
 
-  const [loading, setLoading] = useState(true);
+  const [loading,setLoading] = useState(true);
 
-  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [currentQuestion,setCurrentQuestion] = useState(0);
 
-  const [answers, setAnswers] = useState({});
+  const [answers,setAnswers] = useState({});
 
 
 
-  useEffect(() => {
+  useEffect(()=>{
 
     loadQuiz();
 
-  }, [id]);
+  },[id]);
 
 
 
 
-  const loadQuiz = async () => {
 
-    try {
+  const loadQuiz = async()=>{
 
+    try{
 
-      const token = localStorage.getItem("token");
+      const token =
+      localStorage.getItem("token");
 
 
       const res = await axios.get(
-
-        `https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/quiz/${id}`,
-
+        `${API}/quiz/${id}`,
         {
           headers:{
             Authorization:`Bearer ${token}`
           }
         }
-
       );
 
+
+      console.log("QUIZ DATA",res.data);
 
 
       setQuestions(
-
-        res.data.quiz?.questions || []
-
+        res.data.questions ||
+        res.data.quiz?.questions ||
+        []
       );
 
 
-
-    } catch(error){
-
+    }
+    catch(error){
 
       console.log(
-        "QUIZ ERROR:",
-        error.response?.data || error.message
+        "QUIZ ERROR",
+        error.response?.data
       );
 
 
@@ -73,11 +77,10 @@ export default function Quiz() {
       );
 
 
-    } finally {
-
+    }
+    finally{
 
       setLoading(false);
-
 
     }
 
@@ -87,17 +90,16 @@ export default function Quiz() {
 
 
 
+  const selectAnswer=(questionId,option)=>{
 
-  const selectAnswer = (questionId, option)=>{
 
+    setAnswers({
 
-    setAnswers((prev)=>({
+      ...answers,
 
-      ...prev,
+      [questionId]:option
 
-      [questionId]: option
-
-    }));
+    });
 
 
   };
@@ -107,10 +109,10 @@ export default function Quiz() {
 
 
 
-  const submitQuiz = async()=>{
+  const submitQuiz=async()=>{
 
 
-    let score = 0;
+    let score=0;
 
 
 
@@ -130,11 +132,8 @@ export default function Quiz() {
 
 
 
-
     const percentage = Math.round(
-
-      (score / questions.length) * 100
-
+      (score/questions.length)*100
     );
 
 
@@ -144,34 +143,38 @@ export default function Quiz() {
     try{
 
 
-      const token = localStorage.getItem("token");
+      const token =
+      localStorage.getItem("token");
 
 
 
       await axios.post(
 
-        "https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/quiz/submit",
+        `${API}/quiz/submit`,
 
         {
+
           courseId:id,
-          answers:answers
+
+          answers
+
         },
 
         {
+
           headers:{
             Authorization:`Bearer ${token}`
           }
+
         }
 
       );
 
 
-
-    }catch(error){
-
+    }
+    catch(error){
 
       console.log(error);
-
 
     }
 
@@ -184,44 +187,43 @@ export default function Quiz() {
 
 
       alert(
-        `🎉 Congratulations!\nScore: ${percentage}%`
+        `🎉 Passed\nScore : ${percentage}%`
       );
 
 
+      navigate(
+        `/certificate/${id}`
+      );
 
-      navigate(`/certificate/${id}`);
 
-
-
-    }else{
+    }
+    else{
 
 
       alert(
-        `❌ Failed\nScore: ${percentage}%`
+        `❌ Failed\nScore : ${percentage}%`
       );
 
 
-
       const retry =
-        window.confirm(
-          "Retry Quiz?"
-        );
-
+      window.confirm(
+        "Retry Quiz?"
+      );
 
 
       if(retry){
-
 
         setCurrentQuestion(0);
 
         setAnswers({});
 
 
-      }else{
+      }
+      else{
 
-
-        navigate(`/learn/${id}`);
-
+        navigate(
+          `/learn/${id}`
+        );
 
       }
 
@@ -236,11 +238,9 @@ export default function Quiz() {
 
 
 
-
   if(loading){
 
-
-    return (
+    return(
 
       <div className="container text-center mt-5">
 
@@ -260,13 +260,11 @@ export default function Quiz() {
 
 
 
-  if(questions.length === 0){
+  if(questions.length===0){
 
-
-    return (
+    return(
 
       <div className="container text-center mt-5">
-
 
         <h2>
           No Quiz Found
@@ -284,27 +282,22 @@ export default function Quiz() {
 
 
 
-
   const question =
-    questions[currentQuestion];
+  questions[currentQuestion];
 
 
 
 
 
-
-
-  return (
-
+  return(
 
     <div
-      className="container py-5"
-      style={{
-        minHeight:"100vh",
-        background:"#f8f9fa"
-      }}
+    className="container py-5"
+    style={{
+      minHeight:"100vh",
+      background:"#f8f9fa"
+    }}
     >
-
 
 
       <div className="row justify-content-center">
@@ -313,26 +306,14 @@ export default function Quiz() {
         <div className="col-lg-8">
 
 
-          <div
-            className="card shadow-lg border-0"
-            style={{
-              borderRadius:"20px"
-            }}
-          >
-
+          <div className="card shadow border-0">
 
 
             <div className="card-body p-5">
 
 
 
-              <h2
-                className="text-center mb-4"
-                style={{
-                  color:"#0d6efd",
-                  fontWeight:"bold"
-                }}
-              >
+              <h2 className="text-center text-primary mb-4">
 
                 📝 Course Quiz
 
@@ -342,53 +323,32 @@ export default function Quiz() {
 
 
 
-              <div className="mb-4">
+              <h5>
 
+                Question {currentQuestion+1}
+                /
+                {questions.length}
 
-                <div className="d-flex justify-content-between">
-
-                  <span>
-                    Question {currentQuestion+1}
-                  </span>
-
-
-                  <span>
-                    {questions.length}
-                  </span>
-
-
-                </div>
+              </h5>
 
 
 
 
+
+              <div className="progress mb-4">
 
                 <div
-                  className="progress mt-2"
-                  style={{
-                    height:"10px"
-                  }}
+
+                className="progress-bar"
+
+                style={{
+                  width:
+                  `${((currentQuestion+1)/questions.length)*100}%`
+                }}
+
                 >
 
-
-                  <div
-
-                    className="progress-bar bg-success"
-
-                    style={{
-
-                      width:
-                      `${((currentQuestion+1)/
-                      questions.length)*100}%`
-
-                    }}
-
-                  ></div>
-
-
                 </div>
-
-
 
               </div>
 
@@ -409,87 +369,61 @@ export default function Quiz() {
 
 
 
-
-              <div className="d-grid gap-3">
-
-
-
-                {
-                  question.options.map(
-                    (option,index)=>(
+              {
+                question.options.map(
+                  (option,index)=>(
 
 
-                    <label
+                    <div
+                    key={index}
+                    className="card p-3 mb-3"
+                    style={{
 
-                      key={index}
+                      cursor:"pointer",
 
-                      className="card p-3"
+                      border:
+                      answers[question._id]===option
+                      ?
+                      "2px solid blue"
+                      :
+                      "1px solid #ddd"
 
-                      style={{
+                    }}
+                    onClick={()=>{
 
-                        cursor:"pointer",
+                      selectAnswer(
+                        question._id,
+                        option
+                      )
 
-                        border:
-
-                        answers[question._id] === option
-
-                        ?
-
-                        "2px solid #0d6efd"
-
-                        :
-
-                        "1px solid #ddd"
-
-                      }}
-
+                    }}
                     >
-
 
 
                       <input
 
-                        type="radio"
+                      type="radio"
 
-                        name={question._id}
+                      checked={
+                        answers[question._id]===option
+                      }
 
-                        checked={
-                          answers[question._id] === option
-                        }
-
-                        onChange={()=>
-
-
-                          selectAnswer(
-                            question._id,
-                            option
-                          )
-
-                        }
-
-
-                        style={{
-                          marginRight:"10px"
-                        }}
+                      readOnly
 
                       />
 
-
+                      {" "}
 
                       {option}
 
 
 
-                    </label>
+                    </div>
 
 
-                  ))
-
-                }
-
-
-
-              </div>
+                  )
+                )
+              }
 
 
 
@@ -498,28 +432,25 @@ export default function Quiz() {
 
 
 
-              <div
-                className="d-flex justify-content-between mt-5"
-              >
+              <div className="d-flex justify-content-between mt-4">
 
 
 
                 <button
 
-                  className="btn btn-secondary"
+                className="btn btn-secondary"
 
-                  disabled={
-                    currentQuestion===0
-                  }
+                disabled={
+                  currentQuestion===0
+                }
 
-                  onClick={()=>
+                onClick={()=>{
 
+                  setCurrentQuestion(
+                    currentQuestion-1
+                  )
 
-                    setCurrentQuestion(
-                      currentQuestion-1
-                    )
-
-                  }
+                }}
 
                 >
 
@@ -532,27 +463,24 @@ export default function Quiz() {
 
 
 
-
                 {
 
-                  currentQuestion < questions.length-1
+                  currentQuestion <
+                  questions.length-1
 
                   ?
 
-                  (
-
                   <button
 
-                    className="btn btn-primary"
+                  className="btn btn-primary"
 
-                    onClick={()=>
+                  onClick={()=>{
 
+                    setCurrentQuestion(
+                      currentQuestion+1
+                    )
 
-                      setCurrentQuestion(
-                        currentQuestion+1
-                      )
-
-                    }
+                  }}
 
                   >
 
@@ -561,28 +489,21 @@ export default function Quiz() {
                   </button>
 
 
-                  )
-
-
                   :
 
 
-                  (
-
                   <button
 
-                    className="btn btn-success"
+                  className="btn btn-success"
 
-                    onClick={submitQuiz}
+                  onClick={submitQuiz}
 
                   >
 
-                    ✅ Submit Quiz
+                    Submit Quiz ✅
 
                   </button>
 
-
-                  )
 
                 }
 
@@ -592,20 +513,16 @@ export default function Quiz() {
 
 
 
-
-
             </div>
 
 
           </div>
 
 
-
         </div>
 
 
       </div>
-
 
 
     </div>

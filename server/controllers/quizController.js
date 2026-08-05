@@ -4,47 +4,50 @@ const Course = require("../models/Course");
 const { generateQuiz } = require("../services/geminiService");
 
 
-// =================================
-// Create Quiz (Admin)
-// =================================
 
-exports.createQuiz = async (req, res) => {
+// ===============================
+// GET QUIZ BY COURSE
+// ===============================
+const getQuizByCourse = async(req,res)=>{
 
-  try {
+  try{
 
-    const { courseId, questions } = req.body;
+    const {courseId}=req.params;
 
 
-    const quiz = new Quiz({
+    const quiz = await Quiz.findOne({
+      courseId
+    });
 
-      courseId,
 
-      questions,
+    if(!quiz){
+
+      return res.status(404).json({
+
+        success:false,
+
+        message:"Quiz not found"
+
+      });
+
+    }
+
+
+    res.json({
+
+      success:true,
+
+      questions:quiz.questions
 
     });
 
 
-    await quiz.save();
-
-
-    res.status(201).json({
-
-      success: true,
-
-      message: "Quiz created successfully",
-
-      quiz,
-
-    });
-
-
-  } catch (error) {
+  }
+  catch(error){
 
     res.status(500).json({
 
-      success: false,
-
-      message: error.message,
+      message:error.message
 
     });
 
@@ -55,245 +58,212 @@ exports.createQuiz = async (req, res) => {
 
 
 
-// =================================
-// AI Generate Quiz
-// =================================
-
-exports.generateAIQuiz = async (req, res) => {
-
-  try {
 
 
-    const { courseId } = req.params;
+// ===============================
+// CREATE QUIZ MANUAL
+// ===============================
+const createQuiz = async(req,res)=>{
+
+ try{
+
+
+  const quiz = await Quiz.create(req.body);
+
+
+  res.json({
+
+    success:true,
+
+    quiz
+
+  });
+
+
+ }
+ catch(error){
+
+  res.status(500).json({
+
+    message:error.message
+
+  });
+
+ }
+
+};
 
 
 
-    const course = await Course.findById(courseId);
 
 
 
-    if (!course) {
-
-      return res.status(404).json({
-
-        success: false,
-
-        message: "Course not found",
-
-      });
-
-    }
+// ===============================
+// AI QUIZ GENERATOR
+// POST /api/quiz/generate/:courseId
+// ===============================
+const generateAIQuiz = async(req,res)=>{
 
 
+ try{
 
-    const aiQuiz = await generateQuiz(
+
+   const {courseId}=req.params;
+
+
+
+   // check existing quiz
+
+   const existingQuiz = await Quiz.findOne({
+    courseId
+   });
+
+
+
+   if(existingQuiz){
+
+     return res.json({
+
+       success:true,
+
+       message:"Quiz already exists",
+
+       quiz:existingQuiz
+
+     });
+
+   }
+
+
+
+
+
+   const course = await Course.findById(courseId);
+
+
+
+   if(!course){
+
+     return res.status(404).json({
+
+       success:false,
+
+       message:"Course not found"
+
+     });
+
+   }
+
+
+
+
+
+
+   const aiResponse = await generateQuiz(
       course.title
-    );
+   );
 
 
 
-    const quiz = new Quiz({
 
-      courseId: courseId,
 
-      questions: aiQuiz.questions,
-
-    });
-
-
-
-    await quiz.save();
-
-
-
-    res.json({
-
-      success: true,
-
-      message: "AI Quiz Generated Successfully",
-
-      quiz,
-
-    });
-
-
-
-  } catch (error) {
-
-
-    console.log("AI Quiz Error:", error.message);
-
-
-
-    res.status(500).json({
-
-      success: false,
-
-      message: error.message,
-
-    });
-
-
-  }
-
-};
-
-
-
-
-// =================================
-// Get Quiz by Course ID
-// =================================
-
-exports.getQuizByCourse = async (req, res) => {
-
-  try {
-
-
-    const quiz = await Quiz.findOne({
-
-      courseId: req.params.courseId,
-
-    });
-
-
-
-    if (!quiz) {
-
-      return res.status(404).json({
-
-        success: false,
-
-        message: "Quiz not found",
-
-      });
-
-    }
-
-
-
-    res.json({
-
-      success: true,
-
-      quiz,
-
-    });
-
-
-
-  } catch (error) {
-
-
-    res.status(500).json({
-
-      success: false,
-
-      message: error.message,
-
-    });
-
-
-  }
-
-};
-
-
-
-
-// =================================
-// Submit Quiz
-// =================================
-
-exports.submitQuiz = async (req, res) => {
-
-  try {
-
-
-    const { courseId, answers } = req.body;
-
-
-
-    const quiz = await Quiz.findOne({
+   const quiz = await Quiz.create({
 
       courseId,
 
-    });
+      questions:aiResponse.questions
+
+   });
 
 
 
-    if (!quiz) {
-
-      return res.status(404).json({
-
-        success: false,
-
-        message: "Quiz not found",
-
-      });
-
-    }
 
 
+   res.json({
 
-    let score = 0;
+     success:true,
+
+     message:"AI Quiz generated successfully",
+
+     quiz
+
+   });
 
 
 
-    quiz.questions.forEach((q) => {
+ }
+ catch(error){
 
 
-      if (
-
-        answers[q._id] === q.answer
-
-      ) {
-
-        score++;
-
-      }
+   console.log(
+    "AI QUIZ ERROR:",
+    error
+   );
 
 
-    });
+   res.status(500).json({
+
+     success:false,
+
+     message:error.message
+
+   });
 
 
-
-    const percentage = Math.round(
-
-      (score / quiz.questions.length) * 100
-
-    );
+ }
 
 
-
-    res.json({
-
-      success: true,
-
-      score,
-
-      total: quiz.questions.length,
-
-      percentage,
-
-      passed: percentage >= 70,
-
-    });
+};
 
 
 
-  } catch (error) {
 
 
-    res.status(500).json({
 
-      success: false,
-
-      message: error.message,
-
-    });
+// ===============================
+// SUBMIT QUIZ
+// ===============================
+const submitQuiz = async(req,res)=>{
 
 
-  }
+ try{
+
+
+  res.json({
+
+    success:true,
+
+    message:"Quiz submitted"
+
+  });
+
+
+ }
+ catch(error){
+
+  res.status(500).json({
+
+    message:error.message
+
+  });
+
+ }
+
+};
+
+
+
+
+
+
+module.exports={
+
+ createQuiz,
+
+ getQuizByCourse,
+
+ submitQuiz,
+
+ generateAIQuiz
 
 };

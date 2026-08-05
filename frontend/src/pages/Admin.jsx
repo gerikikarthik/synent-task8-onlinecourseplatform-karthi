@@ -1344,46 +1344,78 @@ export default function Admin() {
 
             <div className="col-md-3">
 
-              <button
-                className="btn btn-outline-success w-100"
-                onClick={() => navigate("/admin/reports/excel")}
-              >
-                📊 Export Excel
-              </button>
+             <button
+  className="btn btn-outline-success w-100"
+  onClick={() =>
+    window.open(
+      `${API}/reports/excel`,
+      "_blank"
+    )
+  }
+>
+  📊 Export Excel
+</button>
+            </div>
 
+            <div className="col-md-3">
+
+             <button
+  className="btn btn-outline-danger w-100"
+  onClick={() =>
+    window.open(
+      `${API}/reports/pdf`,
+      "_blank"
+    )
+  }
+>
+  📕 Export PDF
+</button>
             </div>
 
             <div className="col-md-3">
 
               <button
-                className="btn btn-outline-danger w-100"
-                onClick={() => navigate("/admin/reports/pdf")}
-              >
-                📕 Export PDF
-              </button>
+  className="btn btn-outline-primary w-100"
+  onClick={async () => {
+    try {
+      const res = await axios.get(
+        `${API}/reports/analytics`
+      );
 
+      alert(
+        `Revenue : ₹${res.data.analytics.totalRevenue}`
+      );
+
+    } catch (err) {
+      alert("Unable to load analytics");
+    }
+  }}
+>
+  💰 Revenue Report
+</button>
             </div>
 
             <div className="col-md-3">
+<button
+  className="btn btn-outline-dark w-100"
+  onClick={async () => {
+    try {
+      const res = await axios.get(
+        `${API}/reports/courses`
+      );
 
-              <button
-                className="btn btn-outline-primary w-100"
-                onClick={() => navigate("/admin/revenue")}
-              >
-                💰 Revenue Report
-              </button>
+      alert(
+        `Total Courses : ${res.data.totalCourses}`
+      );
 
-            </div>
-
-            <div className="col-md-3">
-
-              <button
-                className="btn btn-outline-dark w-100"
-                onClick={() => navigate("/admin/activity")}
-              >
-                📈 Activity Logs
-              </button>
-
+    } catch (err) {
+      alert("Unable to load report");
+    }
+  }}
+>
+  📈 Activity Logs
+</button>
+             
             </div>
 
           </div>

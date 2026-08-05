@@ -3,34 +3,50 @@ const router = express.Router();
 
 const authMiddleware = require("../middleware/authMiddleware");
 
+
 const {
   enrollCourse,
   getMyCourses,
-getAllEnrollments,
+  getAllEnrollments,
+  updateProgress
 } = require("../controllers/enrollmentController");
 
-// ===============================
-// ENROLL IN COURSE
-// POST /api/enroll
-// ===============================
+
+
+// Enroll Course
 router.post(
   "/",
   authMiddleware,
   enrollCourse
 );
 
-// ===============================
-// GET MY ENROLLED COURSES
-// GET /api/enroll/mycourses
-// ===============================
+
+
+// My Courses
 router.get(
   "/mycourses",
   authMiddleware,
   getMyCourses
 );
+
+
+
+// All Enrollments
 router.get(
   "/all",
   authMiddleware,
   getAllEnrollments
 );
+
+
+
+// Update Progress
+router.put(
+  "/progress/:courseId",
+  authMiddleware,
+  updateProgress
+);
+
+
+
 module.exports = router;

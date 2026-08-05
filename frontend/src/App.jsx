@@ -10,10 +10,12 @@ import CourseDetails from "./pages/CourseDetails";
 import Cart from "./pages/Cart";
 import MyCourses from "./pages/MyCourses";
 import LearnCourse from "./pages/LearnCourse";
+import Quiz from "./pages/Quiz";
 import Certificate from "./pages/Certificate";
 import AIRoadmap from "./pages/AIRoadmap";
 import AddCourse from "./pages/AddCourse";
 import Admin from "./pages/Admin";
+import AddQuiz from "./pages/AddQuiz";
 
 import ProtectedRoute from "./routes/ProtectedRoute";
 import AdminRoute from "./routes/AdminRoute";
@@ -24,12 +26,19 @@ export default function App() {
       <Navbar />
 
       <Routes>
-        {/* Public Routes */}
+
+        {/* ================= PUBLIC ROUTES ================= */}
+
         <Route path="/" element={<Home />} />
+
         <Route path="/login" element={<Login />} />
+
         <Route path="/register" element={<Register />} />
 
-        {/* Protected Routes */}
+
+
+        {/* ================= STUDENT ROUTES ================= */}
+
         <Route
           path="/courses"
           element={
@@ -75,6 +84,19 @@ export default function App() {
           }
         />
 
+        {/* ================= QUIZ ROUTE ================= */}
+
+        <Route
+          path="/quiz/:id"
+          element={
+            <ProtectedRoute>
+              <Quiz />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ================= CERTIFICATE ================= */}
+
         <Route
           path="/certificate/:id"
           element={
@@ -83,6 +105,8 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
+        {/* ================= AI ROADMAP ================= */}
 
         <Route
           path="/ai-roadmap"
@@ -93,7 +117,10 @@ export default function App() {
           }
         />
 
-        {/* Admin Routes */}
+
+
+        {/* ================= ADMIN ================= */}
+
         <Route
           path="/admin"
           element={
@@ -111,6 +138,16 @@ export default function App() {
             </AdminRoute>
           }
         />
+
+        <Route
+          path="/admin/quiz/:courseId"
+          element={
+            <AdminRoute>
+              <AddQuiz />
+            </AdminRoute>
+          }
+        />
+
       </Routes>
     </BrowserRouter>
   );

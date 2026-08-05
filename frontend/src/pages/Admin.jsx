@@ -1,556 +1,714 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
+
+const API =
+  "https://synent-task8-onlinecourseplatform-karthi.onrender.com/api";
 
 export default function Admin() {
-
-  // ===============================
-  // STATES
-  // ===============================
-
-  const [courses, setCourses] = useState([]);
-  const [users, setUsers] = useState([]);
-
-  const [loading, setLoading] = useState(true);
-
-  // Form States
-
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [price, setPrice] = useState("");
-
-  const [image, setImage] = useState("");
-  const [category, setCategory] = useState("");
-
-  const [instructor, setInstructor] = useState("");
-  const [duration, setDuration] = useState("");
-
-  const [language, setLanguage] = useState("");
-  const [certificate, setCertificate] = useState("");
-
-  const [videoUrl, setVideoUrl] = useState("");
-
-  // Edit Course
-
-  const [editingId, setEditingId] = useState(null);
-
-  // Token
+  const navigate = useNavigate();
 
   const token = localStorage.getItem("token");
 
-  // ===============================
-  // PAGE LOAD
-  // ===============================
+  // ==========================
+  // Dashboard States
+  // ==========================
+
+  const [loading, setLoading] = useState(true);
+
+  const [courses, setCourses] = useState([]);
+
+  const [users, setUsers] = useState([]);
+
+  const [enrollments, setEnrollments] = useState([]);
+
+  const [certificates, setCertificates] = useState([]);
+
+  const [reports, setReports] = useState([]);
+
+  // ==========================
+  // Course Form
+  // ==========================
+
+  const [editingId, setEditingId] = useState(null);
+
+  const [title, setTitle] = useState("");
+
+  const [description, setDescription] = useState("");
+
+  const [price, setPrice] = useState("");
+
+  const [image, setImage] = useState("");
+
+  const [category, setCategory] = useState("");
+
+  const [instructor, setInstructor] = useState("");
+
+  const [duration, setDuration] = useState("");
+
+  const [language, setLanguage] = useState("");
+
+  const [certificate, setCertificate] = useState("Yes");
+
+  const [videoUrl, setVideoUrl] = useState("");
+
+  const [previewVideoUrl, setPreviewVideoUrl] =
+    useState("");
+
+  const [notesUrl, setNotesUrl] = useState("");
+
+  const [discount, setDiscount] = useState(0);
+
+  const [isPremium, setIsPremium] =
+    useState(true);
+
+  const [quizEnabled, setQuizEnabled] =
+    useState(true);
+
+  const [whatYouLearn, setWhatYouLearn] =
+    useState("");
+
+  const [courseContent, setCourseContent] =
+    useState("");
+
+  // ==========================
+  // Search
+  // ==========================
+
+  const [search, setSearch] = useState("");
+
+  // ==========================
+  // Dashboard Counts
+  // ==========================
+
+  const [dashboard, setDashboard] = useState({
+    totalUsers: 0,
+    totalCourses: 0,
+    totalEnrollments: 0,
+    totalCertificates: 0,
+    revenue: 0,
+  });
+
+  // ==========================
+  // Load Dashboard
+  // ==========================
 
   useEffect(() => {
-
-    fetchCourses();
-
-    fetchUsers();
-
+    loadDashboard();
   }, []);
 
-  // ===============================
-  // FETCH COURSES
-  // ===============================
+  // ==========================
+  // Dashboard API
+  // ==========================
 
-  const fetchCourses = async () => {
-
+  const loadDashboard = async () => {
     try {
+      setLoading(true);
 
-      const res = await axios.get(
+      const headers = {
+        Authorization: `Bearer ${token}`,
+      };
 
-        "https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/courses"
+      const [
+        courseRes,
+        userRes,
+        enrollRes,
+        certificateRes,
+      ] = await Promise.all([
 
+        axios.get(`${API}/courses`),
+
+        axios.get(`${API}/auth/users`, {
+          headers,
+        }),
+
+        axios.get(`${API}/enroll/all`, {
+          headers,
+        }),
+
+        axios.get(
+          `${API}/certificate/all`,
+          {
+            headers,
+          }
+        ),
+      ]);
+
+      setCourses(courseRes.data);
+
+      setUsers(userRes.data);
+
+      setEnrollments(
+        enrollRes.data.enrollments || []
       );
 
-      setCourses(res.data);
-
-    }
-
-    catch (err) {
-
-      console.log(err);
-
-    }
-
-  };
-
-  // ===============================
-  // FETCH USERS
-  // ===============================
-
-  const fetchUsers = async () => {
-
-    try {
-
-      const res = await axios.get(
-
-        "https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/auth/users",
-
-        {
-
-          headers: {
-
-            Authorization: `Bearer ${token}`,
-
-          },
-
-        }
-
+      setCertificates(
+        certificateRes.data.certificates || []
       );
 
-      setUsers(res.data);
+      const revenue =
+        (enrollRes.data.enrollments || []).reduce(
+          (sum, item) =>
+            sum + (item.amount || 0),
+          0
+        );
 
-    }
+      setDashboard({
+        totalUsers: userRes.data.length,
+        totalCourses: courseRes.data.length,
+        totalEnrollments:
+          enrollRes.data.enrollments.length,
+        totalCertificates:
+          certificateRes.data.certificates.length,
+        revenue,
+      });
 
-    catch (err) {
-
+    } catch (err) {
       console.log(err);
-
-    }
-
-    finally {
-
+      alert("Failed to load dashboard.");
+    } finally {
       setLoading(false);
-
     }
-
   };
 
-  // Loading Screen
+  // =====================================
+  // PART 2 CONTINUES...
+  // =====================================
+  // ==========================
+  // RESET FORM
+  // ==========================
 
-  if (loading) {
+  const resetForm = () => {
+    setEditingId(null);
 
-    return (
+    setTitle("");
+    setDescription("");
+    setPrice("");
+    setImage("");
+    setCategory("");
+    setInstructor("");
+    setDuration("");
+    setLanguage("");
+    setCertificate("Yes");
+    setVideoUrl("");
+    setPreviewVideoUrl("");
+    setNotesUrl("");
+    setDiscount(0);
+    setIsPremium(true);
+    setQuizEnabled(true);
 
-      <div className="text-center mt-5">
+    setWhatYouLearn("");
+    setCourseContent("");
+  };
 
-        <h2>Loading Dashboard...</h2>
-
-      </div>
-
-    );
-
-  }
-  // ===============================
+  // ==========================
   // ADD COURSE
-  // ===============================
+  // ==========================
 
-  const addCourse = async () => {
-
-    if (!title || !description || !price) {
-
-      alert("Please fill all required fields");
-
-      return;
-
-    }
+  const addCourse = async (e) => {
+    e.preventDefault();
 
     try {
 
-      const newCourse = {
+      if (
+        !title ||
+        !description ||
+        !price ||
+        !image
+      ) {
+        return alert(
+          "Please fill all required fields."
+        );
+      }
+
+      const body = {
 
         title,
+
         description,
-        price,
+
+        price: Number(price),
+
         image,
+
         category,
+
         instructor,
+
         duration,
+
         language,
+
         certificate,
+
         videoUrl,
 
+        previewVideoUrl,
+
+        notesUrl,
+
+        discount: Number(discount),
+
+        isPremium,
+
+        quizEnabled,
+
+        whatYouLearn: whatYouLearn
+          .split("\n")
+          .filter((x) => x.trim() !== ""),
+
+        courseContent: courseContent
+          .split("\n")
+          .filter((x) => x.trim() !== ""),
       };
 
       await axios.post(
 
-        "https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/courses",
+        `${API}/courses`,
 
-        newCourse,
+        body,
 
         {
-
           headers: {
-
             Authorization: `Bearer ${token}`,
-
           },
-
         }
-
       );
 
-      alert("✅ Course Added Successfully");
+      alert("Course Added Successfully");
 
-      fetchCourses();
+      resetForm();
 
-      setTitle("");
-      setDescription("");
-      setPrice("");
-      setImage("");
-      setCategory("");
-      setInstructor("");
-      setDuration("");
-      setLanguage("");
-      setCertificate("");
-      setVideoUrl("");
+      loadDashboard();
 
-    }
-
-    catch (err) {
+    } catch (err) {
 
       console.log(err);
 
       alert(
-
         err.response?.data?.message ||
-
-        "Course Add Failed"
-
+        "Unable to add course."
       );
-
     }
-
   };
 
-  // ===============================
-  // EDIT COURSE
-  // ===============================
-
-  const editCourse = (course) => {
-
-    setEditingId(course._id);
-
-    setTitle(course.title);
-
-    setDescription(course.description);
-
-    setPrice(course.price);
-
-    setImage(course.image);
-
-    setCategory(course.category);
-
-    setInstructor(course.instructor);
-
-    setDuration(course.duration);
-
-    setLanguage(course.language);
-
-    setCertificate(course.certificate);
-
-    setVideoUrl(course.videoUrl);
-
-    window.scrollTo({
-
-      top: 0,
-
-      behavior: "smooth",
-
-    });
-
-  };
-
-  // ===============================
+  // ==========================
   // UPDATE COURSE
-  // ===============================
+  // ==========================
 
-  const updateCourse = async () => {
+  const updateCourse = async (e) => {
 
-    if (!editingId) return;
+    e.preventDefault();
 
     try {
 
-      const updatedCourse = {
+      const body = {
 
         title,
+
         description,
-        price,
+
+        price: Number(price),
+
         image,
+
         category,
+
         instructor,
+
         duration,
+
         language,
+
         certificate,
+
         videoUrl,
 
+        previewVideoUrl,
+
+        notesUrl,
+
+        discount: Number(discount),
+
+        isPremium,
+
+        quizEnabled,
+
+        whatYouLearn: whatYouLearn
+          .split("\n")
+          .filter((x) => x.trim() !== ""),
+
+        courseContent: courseContent
+          .split("\n")
+          .filter((x) => x.trim() !== ""),
       };
 
       await axios.put(
 
-        `https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/courses/${editingId}`,
+        `${API}/courses/${editingId}`,
 
-        updatedCourse,
+        body,
 
         {
-
           headers: {
-
             Authorization: `Bearer ${token}`,
-
           },
-
         }
-
       );
 
-      alert("✅ Course Updated Successfully");
+      alert("Course Updated Successfully");
 
-      fetchCourses();
+      resetForm();
 
-      setEditingId(null);
+      loadDashboard();
 
-      setTitle("");
-      setDescription("");
-      setPrice("");
-      setImage("");
-      setCategory("");
-      setInstructor("");
-      setDuration("");
-      setLanguage("");
-      setCertificate("");
-      setVideoUrl("");
-
-    }
-
-    catch (err) {
+    } catch (err) {
 
       console.log(err);
 
       alert(
-
         err.response?.data?.message ||
-
         "Update Failed"
-
       );
-
     }
-
   };
 
-  // ===============================
+  // ==========================
   // DELETE COURSE
-  // ===============================
+  // ==========================
 
   const deleteCourse = async (id) => {
 
-    const confirmDelete = window.confirm(
-
-      "Are you sure you want to delete this course?"
-
+    const ok = window.confirm(
+      "Delete this course?"
     );
 
-    if (!confirmDelete) return;
+    if (!ok) return;
 
     try {
 
       await axios.delete(
 
-        `https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/courses/${id}`,
+        `${API}/courses/${id}`,
 
         {
-
           headers: {
-
             Authorization: `Bearer ${token}`,
-
           },
-
         }
-
       );
 
-      alert("✅ Course Deleted Successfully");
+      alert("Course Deleted");
 
-      fetchCourses();
+      loadDashboard();
 
-    }
-
-    catch (err) {
+    } catch (err) {
 
       console.log(err);
 
       alert(
-
         err.response?.data?.message ||
-
         "Delete Failed"
-
       );
-
     }
-
   };
 
-  // ===============================
-  // DOWNLOAD EXCEL REPORT
-  // ===============================
+  // ==========================
+  // EDIT COURSE
+  // ==========================
 
-  const downloadExcelReport = async () => {
+  const editCourse = (course) => {
 
-    try {
+    setEditingId(course._id);
 
-      const response = await axios.get(
+    setTitle(course.title || "");
 
-        "https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/reports/excel",
+    setDescription(course.description || "");
 
-        {
+    setPrice(course.price || "");
 
-          responseType: "blob",
+    setImage(course.image || "");
 
-        }
+    setCategory(course.category || "");
 
-      );
+    setInstructor(course.instructor || "");
 
-      const url = window.URL.createObjectURL(
+    setDuration(course.duration || "");
 
-        new Blob([response.data])
+    setLanguage(course.language || "");
 
-      );
+    setCertificate(
+      course.certificate || "Yes"
+    );
 
-      const link = document.createElement("a");
+    setVideoUrl(course.videoUrl || "");
 
-      link.href = url;
+    setPreviewVideoUrl(
+      course.previewVideoUrl || ""
+    );
 
-      link.download = "CourseHub_Report.xlsx";
+    setNotesUrl(course.notesUrl || "");
 
-      document.body.appendChild(link);
+    setDiscount(course.discount || 0);
 
-      link.click();
+    setIsPremium(
+      course.isPremium ?? true
+    );
 
-      link.remove();
+    setQuizEnabled(
+      course.quizEnabled ?? true
+    );
 
-    }
+    setWhatYouLearn(
+      (course.whatYouLearn || []).join("\n")
+    );
 
-    catch (err) {
+    setCourseContent(
+      (course.courseContent || []).join("\n")
+    );
 
-      console.log(err);
-
-      alert("Failed to Download Excel Report");
-
-    }
-
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   };
 
-  // ===============================
-  // DOWNLOAD PDF REPORT
-  // ===============================
+  // ==========================
+  // FILTER COURSES
+  // ==========================
 
-  const downloadPDFReport = async () => {
+  const filteredCourses =
+    courses.filter((course) =>
+      course.title
+        ?.toLowerCase()
+        .includes(search.toLowerCase())
+    );
 
-    try {
+  // ==========================================
+  // PART 3 CONTINUES...
+  // ==========================================
+  // ==========================
+  // LOADING
+  // ==========================
 
-      const response = await axios.get(
+  if (loading) {
+    return (
+      <div
+        className="d-flex justify-content-center align-items-center"
+        style={{ height: "100vh" }}
+      >
+        <div className="spinner-border text-primary" />
+      </div>
+    );
+  }
 
-        "https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/reports/pdf",
-
-        {
-
-          responseType: "blob",
-
-        }
-
-      );
-
-      const url = window.URL.createObjectURL(
-
-        new Blob([response.data])
-
-      );
-
-      const link = document.createElement("a");
-
-      link.href = url;
-
-      link.download = "CourseHub_Report.pdf";
-
-      document.body.appendChild(link);
-
-      link.click();
-
-      link.remove();
-
-    }
-
-    catch (err) {
-
-      console.log(err);
-
-      alert("Failed to Download PDF Report");
-
-    }
-
-  };
-  // ===============================
-  // RETURN
-  // ===============================
+  // ==========================
+  // UI START
+  // ==========================
 
   return (
-
     <div
       className="container-fluid"
       style={{
-        background: "#f4f7fb",
+        background: "#f4f7fc",
         minHeight: "100vh",
         padding: "30px",
       }}
     >
+      {/* ========================== */}
+      {/* HEADER */}
+      {/* ========================== */}
 
-      {/* ===============================
-          HEADER
-      =============================== */}
-
-      <div className="d-flex justify-content-between align-items-center mb-5">
+      <div className="d-flex justify-content-between align-items-center mb-4">
 
         <div>
 
-          <h1 className="fw-bold">
-            📊 Admin Dashboard
-          </h1>
+          <h2
+            style={{
+              fontWeight: "bold",
+              color: "#0d6efd",
+            }}
+          >
+            🎓 Admin Dashboard
+          </h2>
 
           <p className="text-muted">
-            Welcome Back Admin 👋
+            Manage Courses, Students, Quiz &
+            Certificates
           </p>
 
         </div>
 
         <button
-          className="btn btn-primary btn-lg"
-          onClick={() =>
-            window.scrollTo({
-              top: 350,
-              behavior: "smooth",
-            })
-          }
+          className="btn btn-danger"
+          onClick={() => {
+            localStorage.clear();
+            navigate("/login");
+          }}
         >
-          ➕ Add Course
+          Logout
         </button>
 
       </div>
 
-      {/* ===============================
-          DASHBOARD CARDS
-      =============================== */}
+      {/* ========================== */}
+      {/* DASHBOARD CARDS */}
+      {/* ========================== */}
 
-      <div className="row mb-5">
+      <div className="row g-4 mb-5">
 
-        <div className="col-lg-3 col-md-6 mb-4">
+        <div className="col-lg-2 col-md-4">
 
-          <div className="card shadow border-0 h-100">
+          <div
+            className="card border-0 shadow"
+            style={{
+              borderRadius: "20px",
+            }}
+          >
+            <div className="card-body text-center">
 
-            <div className="card-body">
+              <h1>👨‍🎓</h1>
 
-              <h6 className="text-muted">
-                👨‍🎓 Total Users
-              </h6>
-
-              <h2 className="fw-bold text-primary">
-
-                {users.length}
-
+              <h2>
+                {dashboard.totalUsers}
               </h2>
+
+              <p>Total Users</p>
+
+            </div>
+          </div>
+
+        </div>
+
+        <div className="col-lg-2 col-md-4">
+
+          <div
+            className="card border-0 shadow"
+            style={{
+              borderRadius: "20px",
+            }}
+          >
+            <div className="card-body text-center">
+
+              <h1>📚</h1>
+
+              <h2>
+                {dashboard.totalCourses}
+              </h2>
+
+              <p>Courses</p>
+
+            </div>
+          </div>
+
+        </div>
+
+        <div className="col-lg-2 col-md-4">
+
+          <div
+            className="card border-0 shadow"
+            style={{
+              borderRadius: "20px",
+            }}
+          >
+            <div className="card-body text-center">
+
+              <h1>✅</h1>
+
+              <h2>
+                {dashboard.totalEnrollments}
+              </h2>
+
+              <p>Enrollments</p>
+
+            </div>
+          </div>
+
+        </div>
+
+        <div className="col-lg-3 col-md-6">
+
+          <div
+            className="card border-0 shadow"
+            style={{
+              borderRadius: "20px",
+            }}
+          >
+            <div className="card-body text-center">
+
+              <h1>🏆</h1>
+
+              <h2>
+                {dashboard.totalCertificates}
+              </h2>
+
+              <p>Certificates</p>
+
+            </div>
+          </div>
+
+        </div>
+
+        <div className="col-lg-3 col-md-6">
+
+          <div
+            className="card border-0 shadow"
+            style={{
+              borderRadius: "20px",
+              background:
+                "linear-gradient(90deg,#0d6efd,#4f8dfd)",
+              color: "white",
+            }}
+          >
+            <div className="card-body text-center">
+
+              <h1>💰</h1>
+
+              <h2>
+                ₹{dashboard.revenue}
+              </h2>
+
+              <p>Total Revenue</p>
+
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* ========================== */}
+      {/* SEARCH */}
+      {/* ========================== */}
+
+      <div className="card border-0 shadow mb-4">
+
+        <div className="card-body">
+
+          <div className="row">
+
+            <div className="col-md-8">
+
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Search Course..."
+                value={search}
+                onChange={(e) =>
+                  setSearch(e.target.value)
+                }
+              />
+
+            </div>
+
+            <div className="col-md-4">
+
+              <button
+                className="btn btn-primary w-100"
+                onClick={loadDashboard}
+              >
+                Refresh Dashboard
+              </button>
 
             </div>
 
@@ -558,760 +716,770 @@ export default function Admin() {
 
         </div>
 
-        <div className="col-lg-3 col-md-6 mb-4">
+      </div>
 
-          <div className="card shadow border-0 h-100">
+      {/* ==========================
+          PART 3B STARTS HERE
+      ========================== */}
+      {/* ========================== */}
+      {/* ADD / EDIT COURSE FORM */}
+      {/* ========================== */}
 
-            <div className="card-body">
-
-              <h6 className="text-muted">
-                📚 Total Courses
-              </h6>
-
-              <h2 className="fw-bold text-success">
-
-                {courses.length}
-
-              </h2>
-
-            </div>
-
-          </div>
-
+      <div className="card border-0 shadow-lg mb-5">
+        <div className="card-header bg-primary text-white">
+          <h4 className="mb-0">
+            {editingId ? "✏ Edit Course" : "➕ Add New Course"}
+          </h4>
         </div>
 
-        <div className="col-lg-3 col-md-6 mb-4">
-
-          <div className="card shadow border-0 h-100">
-
-            <div className="card-body">
-
-              <h6 className="text-muted">
-                🏆 Certificates
-              </h6>
-
-              <h2 className="fw-bold text-warning">
-
-                128
-
-              </h2>
-
-            </div>
-
-          </div>
-
-        </div>
-
-        <div className="col-lg-3 col-md-6 mb-4">
-
-          <div className="card shadow border-0 h-100">
-
-            <div className="card-body">
-
-              <h6 className="text-muted">
-                💰 Revenue
-              </h6>
-
-              <h2 className="fw-bold text-danger">
-
-                ₹50,000
-
-              </h2>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </div>
-<div className="card shadow border-0 mb-5">
-
-  <div className="card-header bg-primary text-white">
-
-    <h3 className="mb-0">
-      ➕ Add New Course
-    </h3>
-
-  </div>
-
-  <div className="card-body">
-
-    <div className="row">
-
-      {/* Course Title */}
-
-      <div className="col-md-6 mb-3">
-
-        <label className="form-label fw-bold">
-          Course Title
-        </label>
-
-        <input
-          type="text"
-          className="form-control"
-          placeholder="Enter Course Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
-
-      </div>
-
-      {/* Price */}
-
-      <div className="col-md-6 mb-3">
-
-        <label className="form-label fw-bold">
-          Price
-        </label>
-
-        <input
-          type="number"
-          className="form-control"
-          placeholder="Enter Price"
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-        />
-
-      </div>
-
-      {/* Description */}
-
-      <div className="col-md-12 mb-3">
-
-        <label className="form-label fw-bold">
-          Description
-        </label>
-
-        <textarea
-          rows="4"
-          className="form-control"
-          placeholder="Course Description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        ></textarea>
-
-      </div>
-
-      {/* Image */}
-
-      <div className="col-md-6 mb-3">
-
-        <label className="form-label fw-bold">
-          Image URL
-        </label>
-
-        <input
-          type="text"
-          className="form-control"
-          placeholder="https://..."
-          value={image}
-          onChange={(e) => setImage(e.target.value)}
-        />
-
-      </div>
-
-      {/* Category */}
-
-      <div className="col-md-6 mb-3">
-
-        <label className="form-label fw-bold">
-          Category
-        </label>
-
-        <input
-          type="text"
-          className="form-control"
-          placeholder="Web Development"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-        />
-
-      </div>
-
-      {/* Instructor */}
-
-      <div className="col-md-6 mb-3">
-
-        <label className="form-label fw-bold">
-          Instructor
-        </label>
-
-        <input
-          type="text"
-          className="form-control"
-          placeholder="Instructor Name"
-          value={instructor}
-          onChange={(e) => setInstructor(e.target.value)}
-        />
-
-      </div>
-
-      {/* Duration */}
-
-      <div className="col-md-6 mb-3">
-
-        <label className="form-label fw-bold">
-          Duration
-        </label>
-
-        <input
-          type="text"
-          className="form-control"
-          placeholder="10 Hours"
-          value={duration}
-          onChange={(e) => setDuration(e.target.value)}
-        />
-
-      </div>
-      {/* Language */}
-
-      <div className="col-md-6 mb-3">
-
-        <label className="form-label fw-bold">
-          Language
-        </label>
-
-        <input
-          type="text"
-          className="form-control"
-          placeholder="English"
-          value={language}
-          onChange={(e) => setLanguage(e.target.value)}
-        />
-
-      </div>
-
-      {/* Certificate */}
-
-      <div className="col-md-6 mb-3">
-
-        <label className="form-label fw-bold">
-          Certificate
-        </label>
-
-        <select
-          className="form-select"
-          value={certificate}
-          onChange={(e) => setCertificate(e.target.value)}
-        >
-
-          <option value="">
-            Select
-          </option>
-
-          <option value="Yes">
-            Yes
-          </option>
-
-          <option value="No">
-            No
-          </option>
-
-        </select>
-
-      </div>
-
-      {/* Preview Video */}
-
-      <div className="col-md-12 mb-4">
-
-        <label className="form-label fw-bold">
-          Preview Video URL
-        </label>
-
-        <input
-          type="text"
-          className="form-control"
-          placeholder="https://youtube.com/..."
-          value={videoUrl}
-          onChange={(e) => setVideoUrl(e.target.value)}
-        />
-
-      </div>
-
-      {/* Save / Update Button */}
-
-      <div className="col-md-12">
-
-        {
-
-          editingId ? (
-
-            <button
-              className="btn btn-warning btn-lg"
-              onClick={updateCourse}
-            >
-
-              ✏ Update Course
-
-            </button>
-
-          ) : (
-
-            <button
-              className="btn btn-success btn-lg"
-              onClick={addCourse}
-            >
-
-              💾 Save Course
-
-            </button>
-
-          )
-
-        }
-
-      </div>
-
-    </div>
-
-  </div>
-
-</div>
-<div className="card shadow border-0 mb-5">
-
-  <div className="card-header bg-dark text-white">
-
-    <h3 className="mb-0">
-
-      📚 Manage Courses
-
-    </h3>
-
-  </div>
-
-  <div className="card-body">
-
-    <div className="table-responsive">
-
-      <table className="table table-hover table-bordered align-middle">
-
-        <thead className="table-primary">
-
-          <tr>
-
-            <th>#</th>
-
-            <th>Image</th>
-
-            <th>Title</th>
-
-            <th>Category</th>
-
-            <th>Instructor</th>
-
-            <th>Price</th>
-
-            <th>Students</th>
-
-            <th>Rating</th>
-
-            <th>Actions</th>
-
-          </tr>
-
-        </thead>
-
-        <tbody>
-
-          {
-
-            courses.length === 0 ?
-
-            (
-
-              <tr>
-
-                <td
-                  colSpan="9"
-                  className="text-center"
+        <div className="card-body">
+
+          <form
+            onSubmit={
+              editingId
+                ? updateCourse
+                : addCourse
+            }
+          >
+
+            <div className="row">
+
+              <div className="col-md-6 mb-3">
+
+                <label className="form-label">
+                  Course Title
+                </label>
+
+                <input
+                  type="text"
+                  className="form-control"
+                  value={title}
+                  onChange={(e) =>
+                    setTitle(e.target.value)
+                  }
+                  required
+                />
+
+              </div>
+
+              <div className="col-md-6 mb-3">
+
+                <label className="form-label">
+                  Instructor
+                </label>
+
+                <input
+                  type="text"
+                  className="form-control"
+                  value={instructor}
+                  onChange={(e) =>
+                    setInstructor(e.target.value)
+                  }
+                />
+
+              </div>
+
+              <div className="col-12 mb-3">
+
+                <label className="form-label">
+                  Description
+                </label>
+
+                <textarea
+                  rows="4"
+                  className="form-control"
+                  value={description}
+                  onChange={(e) =>
+                    setDescription(e.target.value)
+                  }
+                />
+
+              </div>
+
+              <div className="col-md-4 mb-3">
+
+                <label className="form-label">
+                  Price
+                </label>
+
+                <input
+                  type="number"
+                  className="form-control"
+                  value={price}
+                  onChange={(e) =>
+                    setPrice(e.target.value)
+                  }
+                />
+
+              </div>
+
+              <div className="col-md-4 mb-3">
+
+                <label className="form-label">
+                  Category
+                </label>
+
+                <input
+                  type="text"
+                  className="form-control"
+                  value={category}
+                  onChange={(e) =>
+                    setCategory(e.target.value)
+                  }
+                />
+
+              </div>
+
+              <div className="col-md-4 mb-3">
+
+                <label className="form-label">
+                  Duration
+                </label>
+
+                <input
+                  type="text"
+                  className="form-control"
+                  value={duration}
+                  onChange={(e) =>
+                    setDuration(e.target.value)
+                  }
+                />
+
+              </div>
+
+              <div className="col-md-6 mb-3">
+
+                <label className="form-label">
+                  Language
+                </label>
+
+                <input
+                  type="text"
+                  className="form-control"
+                  value={language}
+                  onChange={(e) =>
+                    setLanguage(e.target.value)
+                  }
+                />
+
+              </div>
+
+              <div className="col-md-6 mb-3">
+
+                <label className="form-label">
+                  Discount %
+                </label>
+
+                <input
+                  type="number"
+                  className="form-control"
+                  value={discount}
+                  onChange={(e) =>
+                    setDiscount(e.target.value)
+                  }
+                />
+
+              </div>
+
+              <div className="col-12 mb-3">
+
+                <label className="form-label">
+                  Course Image URL
+                </label>
+
+                <input
+                  type="text"
+                  className="form-control"
+                  value={image}
+                  onChange={(e) =>
+                    setImage(e.target.value)
+                  }
+                />
+
+              </div>
+
+              <div className="col-12 mb-3">
+
+                <label className="form-label">
+                  Main Video URL
+                </label>
+
+                <input
+                  type="text"
+                  className="form-control"
+                  value={videoUrl}
+                  onChange={(e) =>
+                    setVideoUrl(e.target.value)
+                  }
+                />
+
+              </div>
+
+              <div className="col-12 mb-3">
+
+                <label className="form-label">
+                  Preview Video URL
+                </label>
+
+                <input
+                  type="text"
+                  className="form-control"
+                  value={previewVideoUrl}
+                  onChange={(e) =>
+                    setPreviewVideoUrl(
+                      e.target.value
+                    )
+                  }
+                />
+
+              </div>
+
+              <div className="col-12 mb-3">
+
+                <label className="form-label">
+                  Notes PDF URL
+                </label>
+
+                <input
+                  type="text"
+                  className="form-control"
+                  value={notesUrl}
+                  onChange={(e) =>
+                    setNotesUrl(e.target.value)
+                  }
+                />
+
+              </div>
+              <div className="col-md-6 mb-3">
+
+                <label className="form-label">
+                  What You'll Learn
+                </label>
+
+                <textarea
+                  rows="8"
+                  className="form-control"
+                  placeholder="One point per line"
+                  value={whatYouLearn}
+                  onChange={(e) =>
+                    setWhatYouLearn(e.target.value)
+                  }
+                />
+
+              </div>
+
+              <div className="col-md-6 mb-3">
+
+                <label className="form-label">
+                  Course Content
+                </label>
+
+                <textarea
+                  rows="8"
+                  className="form-control"
+                  placeholder="One topic per line"
+                  value={courseContent}
+                  onChange={(e) =>
+                    setCourseContent(e.target.value)
+                  }
+                />
+
+              </div>
+
+              <div className="col-md-4 mb-4">
+
+                <label className="form-label">
+                  Certificate
+                </label>
+
+                <select
+                  className="form-select"
+                  value={certificate}
+                  onChange={(e) =>
+                    setCertificate(e.target.value)
+                  }
                 >
+                  <option value="Yes">
+                    Yes
+                  </option>
 
-                  No Courses Found
+                  <option value="No">
+                    No
+                  </option>
 
-                </td>
+                </select>
 
-              </tr>
+              </div>
 
-            )
+              <div className="col-md-4 mb-4 d-flex align-items-center">
 
-            :
+                <div className="form-check form-switch mt-4">
 
-            (
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    checked={isPremium}
+                    onChange={(e) =>
+                      setIsPremium(
+                        e.target.checked
+                      )
+                    }
+                  />
 
-              courses.map((course, index) => (
+                  <label className="form-check-label ms-2">
+                    Premium Course
+                  </label>
 
-                <tr key={course._id}>
+                </div>
 
-                  <td>
+              </div>
 
-                    {index + 1}
+              <div className="col-md-4 mb-4 d-flex align-items-center">
 
-                  </td>
+                <div className="form-check form-switch mt-4">
 
-                  <td>
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    checked={quizEnabled}
+                    onChange={(e) =>
+                      setQuizEnabled(
+                        e.target.checked
+                      )
+                    }
+                  />
 
-                    <img
+                  <label className="form-check-label ms-2">
+                    Quiz Enabled
+                  </label>
 
-                      src={course.image}
+                </div>
 
-                      alt={course.title}
+              </div>
 
-                      width="90"
+            </div>
 
-                      height="60"
+            <hr />
 
-                      style={{
+            <div className="d-flex gap-3">
 
-                        objectFit: "cover",
+              <button
+                type="submit"
+                className="btn btn-success btn-lg"
+              >
+                {editingId
+                  ? "✅ Update Course"
+                  : "➕ Add Course"}
+              </button>
 
-                        borderRadius: "10px"
+              {editingId && (
 
-                      }}
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-lg"
+                  onClick={resetForm}
+                >
+                  Cancel
+                </button>
 
-                    />
+              )}
 
-                  </td>
+            </div>
 
-                  <td>
+          </form>
 
-                    <strong>
+        </div>
 
-                      {course.title}
+      </div>
 
-                    </strong>
+      {/* ==========================
+          PART 4 STARTS HERE
+          ========================== */}
+      {/* ========================== */}
+      {/* MANAGE COURSES */}
+      {/* ========================== */}
 
-                  </td>
+      <div className="card border-0 shadow-lg">
 
-                  <td>
+        <div className="card-header bg-dark text-white d-flex justify-content-between align-items-center">
 
-                    {course.category}
+          <h4 className="mb-0">
+            📚 Manage Courses
+          </h4>
 
-                  </td>
+          <span className="badge bg-warning text-dark fs-6">
+            {filteredCourses.length} Courses
+          </span>
 
-                  <td>
+        </div>
 
-                    {course.instructor}
+        <div className="card-body">
 
-                  </td>
+          <div className="table-responsive">
 
-                  <td>
+            <table className="table table-hover align-middle">
 
-                    ₹{course.price}
+              <thead className="table-primary">
 
-                  </td>
+                <tr>
 
-                  <td>
+                  <th>Image</th>
 
-                    {course.students || 0}
+                  <th>Course</th>
 
-                  </td>
+                  <th>Instructor</th>
 
-                  <td>
+                  <th>Category</th>
 
-                    ⭐ {course.rating || 0}
+                  <th>Price</th>
 
-                  </td>
+                  <th>Students</th>
 
-                  <td>
+                  <th>Rating</th>
 
-                    <button
-
-                      className="btn btn-warning btn-sm me-2"
-
-                      onClick={() => editCourse(course)}
-
-                    >
-
-                      ✏ Edit
-
-                    </button>
-
-                    <button
-
-                      className="btn btn-danger btn-sm"
-
-                      onClick={() => deleteCourse(course._id)}
-
-                    >
-
-                      🗑 Delete
-
-                    </button>
-
-                  </td>
+                  <th>Actions</th>
 
                 </tr>
 
-              ))
+              </thead>
 
-            )
+              <tbody>
 
-          }
+                {filteredCourses.length === 0 ? (
 
-        </tbody>
+                  <tr>
 
-      </table>
+                    <td
+                      colSpan="8"
+                      className="text-center py-5"
+                    >
+                      No Courses Found
+                    </td>
+
+                  </tr>
+
+                ) : (
+
+                  filteredCourses.map((course) => (
+
+                    <tr key={course._id}>
+
+                      <td>
+
+                        <img
+                          src={course.image}
+                          alt={course.title}
+                          style={{
+                            width: "90px",
+                            height: "60px",
+                            objectFit: "cover",
+                            borderRadius: "10px",
+                          }}
+                        />
+
+                      </td>
+
+                      <td>
+
+                        <h6 className="fw-bold mb-1">
+                          {course.title}
+                        </h6>
+
+                        <small className="text-muted">
+                          {course.duration}
+                        </small>
+
+                      </td>
+
+                      <td>
+
+                        {course.instructor}
+
+                      </td>
+
+                      <td>
+
+                        <span className="badge bg-info">
+
+                          {course.category}
+
+                        </span>
+
+                      </td>
+
+                      <td>
+
+                        ₹{course.price}
+
+                      </td>
+
+                      <td>
+
+                        {course.students || 0}
+
+                      </td>
+
+                      <td>
+
+                        ⭐ {course.rating || 0}
+
+                      </td>
+
+                      <td>
+
+                        <div className="d-flex flex-wrap gap-2">
+
+                          <button
+                            className="btn btn-sm btn-primary"
+                            onClick={() =>
+                              editCourse(course)
+                            }
+                          >
+                            ✏ Edit
+                          </button>
+
+                          <button
+                            className="btn btn-sm btn-danger"
+                            onClick={() =>
+                              deleteCourse(course._id)
+                            }
+                          >
+                            🗑 Delete
+                          </button>
+
+                          <button
+                            className="btn btn-sm btn-warning"
+                            onClick={() =>
+                              navigate(
+                                `/admin/quiz/${course._id}`
+                              )
+                            }
+                          >
+                            📝 Add Quiz
+                          </button>
+                          <button
+                            className="btn btn-sm btn-success"
+                            onClick={() =>
+                              navigate(
+                                `/admin/students/${course._id}`
+                              )
+                            }
+                          >
+                            👨‍🎓 Students
+                          </button>
+
+                          <button
+                            className="btn btn-sm btn-info text-white"
+                            onClick={() =>
+                              navigate(
+                                `/admin/progress/${course._id}`
+                              )
+                            }
+                          >
+                            📊 Progress
+                          </button>
+
+                          <button
+                            className="btn btn-sm btn-secondary"
+                            onClick={() =>
+                              navigate(
+                                `/admin/certificates/${course._id}`
+                              )
+                            }
+                          >
+                            🎓 Certificates
+                          </button>
+
+                          <button
+                            className="btn btn-sm btn-dark"
+                            onClick={() =>
+                              navigate(
+                                `/admin/quiz-ai/${course._id}`
+                              )
+                            }
+                          >
+                            🤖 AI Quiz
+                          </button>
+
+                        </div>
+
+                      </td>
+
+                    </tr>
+
+                  ))
+
+                )}
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* ==========================
+          PART 4C STARTS HERE
+      ========================== */}
+      {/* ========================== */}
+      {/* REPORT CENTER */}
+      {/* ========================== */}
+
+      <div className="card shadow-lg border-0 mt-5">
+
+        <div className="card-header bg-success text-white">
+
+          <h4 className="mb-0">
+            📄 Report Center
+          </h4>
+
+        </div>
+
+        <div className="card-body">
+
+          <div className="row g-3">
+
+            <div className="col-md-3">
+
+              <button
+                className="btn btn-outline-success w-100"
+                onClick={() => navigate("/admin/reports/excel")}
+              >
+                📊 Export Excel
+              </button>
+
+            </div>
+
+            <div className="col-md-3">
+
+              <button
+                className="btn btn-outline-danger w-100"
+                onClick={() => navigate("/admin/reports/pdf")}
+              >
+                📕 Export PDF
+              </button>
+
+            </div>
+
+            <div className="col-md-3">
+
+              <button
+                className="btn btn-outline-primary w-100"
+                onClick={() => navigate("/admin/revenue")}
+              >
+                💰 Revenue Report
+              </button>
+
+            </div>
+
+            <div className="col-md-3">
+
+              <button
+                className="btn btn-outline-dark w-100"
+                onClick={() => navigate("/admin/activity")}
+              >
+                📈 Activity Logs
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* ========================== */}
+      {/* ANALYTICS */}
+      {/* ========================== */}
+
+      <div className="card shadow-lg border-0 mt-5">
+
+        <div className="card-header bg-info text-white">
+
+          <h4 className="mb-0">
+            📈 Analytics
+          </h4>
+
+        </div>
+
+        <div className="card-body">
+
+          <div className="row text-center">
+
+            <div className="col-md-3">
+
+              <h2 className="text-primary">
+                {dashboard.totalUsers}
+              </h2>
+
+              <p>Total Users</p>
+
+            </div>
+
+            <div className="col-md-3">
+
+              <h2 className="text-success">
+                {dashboard.totalCourses}
+              </h2>
+
+              <p>Total Courses</p>
+
+            </div>
+
+            <div className="col-md-3">
+
+              <h2 className="text-warning">
+                {dashboard.totalEnrollments}
+              </h2>
+
+              <p>Total Enrollments</p>
+
+            </div>
+
+            <div className="col-md-3">
+
+              <h2 className="text-danger">
+                ₹{dashboard.revenue}
+              </h2>
+
+              <p>Total Revenue</p>
+
+            </div>
+
+          </div>
+
+          <hr />
+
+          <div className="alert alert-info">
+
+            <strong>Coming Soon 🚀</strong>
+
+            <ul className="mt-3 mb-0">
+
+              <li>📊 Revenue Charts</li>
+
+              <li>📈 Monthly Enrollments Graph</li>
+
+              <li>👨‍🎓 Active Students</li>
+
+              <li>🏆 Top Selling Courses</li>
+
+              <li>🤖 AI Insights</li>
+
+            </ul>
+
+          </div>
+
+        </div>
+
+      </div>
 
     </div>
-
-  </div>
-
-</div>
-<div className="card shadow border-0 mb-5">
-
-  <div className="card-header bg-success text-white">
-
-    <h3 className="mb-0">
-
-      📊 Report Center
-
-    </h3>
-
-  </div>
-
-  <div className="card-body">
-
-    <p className="text-muted mb-4">
-
-      Download Professional Reports of your LMS Platform.
-
-    </p>
-
-    <div className="row">
-
-      {/* Excel */}
-
-      <div className="col-lg-4 col-md-6 mb-4">
-
-        <div className="card border-primary shadow-sm h-100">
-
-          <div className="card-body text-center">
-
-            <h1>📥</h1>
-
-            <h5>Excel Report</h5>
-
-            <p className="text-muted">
-
-              Export all course data into Excel.
-
-            </p>
-
-            <button
-
-              className="btn btn-primary w-100"
-
-              onClick={downloadExcelReport}
-
-            >
-
-              Download Excel
-
-            </button>
-
-          </div>
-
-        </div>
-
-      </div>
-
-      {/* PDF */}
-
-      <div className="col-lg-4 col-md-6 mb-4">
-
-        <div className="card border-danger shadow-sm h-100">
-
-          <div className="card-body text-center">
-
-            <h1>📄</h1>
-
-            <h5>PDF Report</h5>
-
-            <p className="text-muted">
-
-              Generate printable PDF Report.
-
-            </p>
-
-            <button
-
-              className="btn btn-danger w-100"
-
-              onClick={downloadPDFReport}
-
-            >
-
-              Download PDF
-
-            </button>
-
-          </div>
-
-        </div>
-
-      </div>
-
-      {/* Analytics */}
-
-      <div className="col-lg-4 col-md-6 mb-4">
-
-        <div className="card border-success shadow-sm h-100">
-
-          <div className="card-body text-center">
-
-            <h1>📈</h1>
-
-            <h5>Analytics</h5>
-
-            <p className="text-muted">
-
-              Revenue, Students & Courses Summary.
-
-            </p>
-
-            <button
-
-              className="btn btn-success w-100"
-
-            >
-
-              View Analytics
-
-            </button>
-
-          </div>
-
-        </div>
-
-      </div>
-
-      {/* Students */}
-
-      <div className="col-lg-4 col-md-6 mb-4">
-
-        <div className="card border-warning shadow-sm h-100">
-
-          <div className="card-body text-center">
-
-            <h1>👨‍🎓</h1>
-
-            <h5>Students Report</h5>
-
-            <p className="text-muted">
-
-              Export all registered students.
-
-            </p>
-
-            <button
-
-              className="btn btn-warning w-100"
-
-            >
-
-              Export Students
-
-            </button>
-
-          </div>
-
-        </div>
-
-      </div>
-
-      {/* Courses */}
-
-      <div className="col-lg-4 col-md-6 mb-4">
-
-        <div className="card border-info shadow-sm h-100">
-
-          <div className="card-body text-center">
-
-            <h1>📚</h1>
-
-            <h5>Courses Report</h5>
-
-            <p className="text-muted">
-
-              Export all available courses.
-
-            </p>
-
-            <button
-
-              className="btn btn-info w-100"
-
-            >
-
-              Export Courses
-
-            </button>
-
-          </div>
-
-        </div>
-
-      </div>
-
-      {/* Certificates */}
-
-      <div className="col-lg-4 col-md-6 mb-4">
-
-        <div className="card border-secondary shadow-sm h-100">
-
-          <div className="card-body text-center">
-
-            <h1>🏆</h1>
-
-            <h5>Certificates Report</h5>
-
-            <p className="text-muted">
-
-              Export issued certificates.
-
-            </p>
-
-            <button
-
-              className="btn btn-secondary w-100"
-
-            >
-
-              Export Certificates
-
-            </button>
-
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
-
-  </div>
-
-</div>
-
-</div>
 
   );
 
 }
-
-{/* ===============================
-      REPORT CENTER STARTS HERE
-=============================== */}
-
-{/* ===============================
-    MANAGE COURSES STARTS HERE
-=============================== */}
-
-      {/* ===============================
-          ADD COURSE SECTION STARTS HERE
-      =============================== */}
-  // ===== PART 3 STARTS HERE =====
-
-  // ===== PART 2 STARTS HERE =====

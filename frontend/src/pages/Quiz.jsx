@@ -2,100 +2,150 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 
+
 export default function Quiz() {
 
   const { id } = useParams();
   const navigate = useNavigate();
 
+
   const [questions, setQuestions] = useState([]);
+
   const [loading, setLoading] = useState(true);
 
   const [currentQuestion, setCurrentQuestion] = useState(0);
+
   const [answers, setAnswers] = useState({});
 
 
+
   useEffect(() => {
+
     loadQuiz();
-  }, []);
+
+  }, [id]);
+
+
 
 
   const loadQuiz = async () => {
 
     try {
 
+
       const token = localStorage.getItem("token");
 
 
       const res = await axios.get(
+
         `https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/quiz/${id}`,
+
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers:{
+            Authorization:`Bearer ${token}`
+          }
         }
+
       );
+
 
 
       setQuestions(
+
         res.data.quiz?.questions || []
+
       );
 
 
+
+    } catch(error){
+
+
+      console.log(
+        "QUIZ ERROR:",
+        error.response?.data || error.message
+      );
+
+
+      alert(
+        error.response?.data?.message ||
+        "Quiz not available"
+      );
+
+
+    } finally {
+
+
+      setLoading(false);
+
+
     }
-catch (error) {
 
-  console.log("QUIZ ERROR:", error.response?.data || error.message);
-
-  alert(
-    error.response?.data?.message || 
-    "Quiz not available"
-  );
-
-}
   };
 
 
 
-  const selectAnswer = (questionId, option) => {
 
-    setAnswers((prev) => ({
+
+
+  const selectAnswer = (questionId, option)=>{
+
+
+    setAnswers((prev)=>({
+
       ...prev,
-      [questionId]: option,
+
+      [questionId]: option
+
     }));
 
+
   };
 
 
 
-  const submitQuiz = async () => {
+
+
+
+  const submitQuiz = async()=>{
 
 
     let score = 0;
 
 
-    questions.forEach((q) => {
 
-      if (
+    questions.forEach((q)=>{
+
+
+      if(
         answers[q._id] === q.answer
-      ) {
+      ){
 
         score++;
 
       }
 
+
     });
 
 
 
+
     const percentage = Math.round(
+
       (score / questions.length) * 100
+
     );
 
 
 
-    try {
+
+
+    try{
+
 
       const token = localStorage.getItem("token");
+
 
 
       await axios.post(
@@ -103,28 +153,34 @@ catch (error) {
         "https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/quiz/submit",
 
         {
-          courseId: id,
-          answers: answers,
+          courseId:id,
+          answers:answers
         },
 
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers:{
+            Authorization:`Bearer ${token}`
+          }
         }
 
       );
 
 
-    } catch (error) {
+
+    }catch(error){
+
 
       console.log(error);
+
 
     }
 
 
 
-    if (percentage >= 70) {
+
+
+
+    if(percentage >= 70){
 
 
       alert(
@@ -132,10 +188,12 @@ catch (error) {
       );
 
 
+
       navigate(`/certificate/${id}`);
 
 
-    } else {
+
+    }else{
 
 
       alert(
@@ -143,29 +201,44 @@ catch (error) {
       );
 
 
-      const retry = window.confirm(
-        "Retry Quiz?"
-      );
+
+      const retry =
+        window.confirm(
+          "Retry Quiz?"
+        );
 
 
-      if (retry) {
+
+      if(retry){
+
 
         setCurrentQuestion(0);
+
         setAnswers({});
 
-      } else {
+
+      }else{
+
 
         navigate(`/learn/${id}`);
 
+
       }
 
+
     }
+
 
   };
 
 
 
-  if (loading) {
+
+
+
+
+  if(loading){
+
 
     return (
 
@@ -183,15 +256,22 @@ catch (error) {
 
 
 
-  if (questions.length === 0) {
+
+
+
+
+  if(questions.length === 0){
+
 
     return (
 
       <div className="container text-center mt-5">
 
+
         <h2>
           No Quiz Found
         </h2>
+
 
       </div>
 
@@ -201,19 +281,31 @@ catch (error) {
 
 
 
-  const question = questions[currentQuestion];
+
+
+
+
+  const question =
+    questions[currentQuestion];
+
+
+
+
 
 
 
   return (
 
+
     <div
       className="container py-5"
       style={{
-        minHeight: "100vh",
-        background: "#f8f9fa",
+        minHeight:"100vh",
+        background:"#f8f9fa"
       }}
     >
+
+
 
       <div className="row justify-content-center">
 
@@ -224,19 +316,21 @@ catch (error) {
           <div
             className="card shadow-lg border-0"
             style={{
-              borderRadius: "20px",
+              borderRadius:"20px"
             }}
           >
+
 
 
             <div className="card-body p-5">
 
 
+
               <h2
                 className="text-center mb-4"
                 style={{
-                  color: "#0d6efd",
-                  fontWeight: "bold",
+                  color:"#0d6efd",
+                  fontWeight:"bold"
                 }}
               >
 
@@ -246,12 +340,15 @@ catch (error) {
 
 
 
+
+
               <div className="mb-4">
+
 
                 <div className="d-flex justify-content-between">
 
                   <span>
-                    Question {currentQuestion + 1}
+                    Question {currentQuestion+1}
                   </span>
 
 
@@ -264,25 +361,26 @@ catch (error) {
 
 
 
+
+
                 <div
                   className="progress mt-2"
                   style={{
-                    height: "10px",
+                    height:"10px"
                   }}
                 >
+
 
                   <div
 
                     className="progress-bar bg-success"
 
                     style={{
+
                       width:
-                        `${
-                          ((currentQuestion + 1)
-                          /
-                          questions.length)
-                          * 100
-                        }%`,
+                      `${((currentQuestion+1)/
+                      questions.length)*100}%`
+
                     }}
 
                   ></div>
@@ -291,7 +389,12 @@ catch (error) {
                 </div>
 
 
+
               </div>
+
+
+
+
 
 
 
@@ -303,70 +406,95 @@ catch (error) {
 
 
 
+
+
+
+
               <div className="d-grid gap-3">
+
 
 
                 {
                   question.options.map(
-                    (option, index) => (
+                    (option,index)=>(
 
-                      <label
 
-                        key={index}
+                    <label
 
-                        className="card p-3"
+                      key={index}
+
+                      className="card p-3"
+
+                      style={{
+
+                        cursor:"pointer",
+
+                        border:
+
+                        answers[question._id] === option
+
+                        ?
+
+                        "2px solid #0d6efd"
+
+                        :
+
+                        "1px solid #ddd"
+
+                      }}
+
+                    >
+
+
+
+                      <input
+
+                        type="radio"
+
+                        name={question._id}
+
+                        checked={
+                          answers[question._id] === option
+                        }
+
+                        onChange={()=>
+
+
+                          selectAnswer(
+                            question._id,
+                            option
+                          )
+
+                        }
+
 
                         style={{
-
-                          cursor: "pointer",
-
-                          border:
-                          answers[question._id] === option
-                          ?
-                          "2px solid #0d6efd"
-                          :
-                          "1px solid #ddd",
-
+                          marginRight:"10px"
                         }}
 
-                      >
-
-                        <input
-
-                          type="radio"
-
-                          name={question._id}
-
-                          checked={
-                            answers[question._id] === option
-                          }
-
-                          onChange={() =>
-                            selectAnswer(
-                              question._id,
-                              option
-                            )
-                          }
-
-                          style={{
-                            marginRight: "10px",
-                          }}
-
-                        />
+                      />
 
 
-                        {option}
+
+                      {option}
 
 
-                      </label>
 
-                    )
-                  )
+                    </label>
+
+
+                  ))
 
                 }
 
 
+
               </div>
+
+
+
+
+
 
 
 
@@ -375,18 +503,22 @@ catch (error) {
               >
 
 
+
                 <button
 
                   className="btn btn-secondary"
 
                   disabled={
-                    currentQuestion === 0
+                    currentQuestion===0
                   }
 
-                  onClick={() =>
+                  onClick={()=>
+
+
                     setCurrentQuestion(
-                      currentQuestion - 1
+                      currentQuestion-1
                     )
+
                   }
 
                 >
@@ -398,48 +530,57 @@ catch (error) {
 
 
 
+
+
+
                 {
 
-                  currentQuestion <
-                  questions.length - 1
+                  currentQuestion < questions.length-1
 
                   ?
 
                   (
 
-                    <button
+                  <button
 
-                      className="btn btn-primary"
+                    className="btn btn-primary"
 
-                      onClick={() =>
-                        setCurrentQuestion(
-                          currentQuestion + 1
-                        )
-                      }
+                    onClick={()=>
 
-                    >
 
-                      Next ➡
+                      setCurrentQuestion(
+                        currentQuestion+1
+                      )
 
-                    </button>
+                    }
+
+                  >
+
+                    Next ➡
+
+                  </button>
+
 
                   )
 
+
                   :
+
 
                   (
 
-                    <button
+                  <button
 
-                      className="btn btn-success"
+                    className="btn btn-success"
 
-                      onClick={submitQuiz}
+                    onClick={submitQuiz}
 
-                    >
+                  >
 
-                      ✅ Submit Quiz
+                    ✅ Submit Quiz
 
-                    </button>
+                  </button>
+
 
                   )
 
@@ -451,10 +592,13 @@ catch (error) {
 
 
 
+
+
             </div>
 
 
           </div>
+
 
 
         </div>
@@ -463,8 +607,11 @@ catch (error) {
       </div>
 
 
+
     </div>
 
+
   );
+
 
 }

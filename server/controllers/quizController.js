@@ -5,9 +5,7 @@ const Quiz = require("../models/Quiz");
 // GET /api/quiz/:courseId
 // ===============================
 const getQuizByCourse = async (req, res) => {
-
   try {
-
     const { courseId } = req.params;
 
     const quiz = await Quiz.findOne({ courseId });
@@ -19,30 +17,35 @@ const getQuizByCourse = async (req, res) => {
       });
     }
 
-    // Shuffle questions every time
-    const questions = [...quiz.questions].sort(
+    // Shuffle questions
+    const shuffledQuestions = [...quiz.questions].sort(
       () => Math.random() - 0.5
     );
 
-    res.json({
+    return res.status(200).json({
       success: true,
-      questions
+      quiz: {
+        _id: quiz._id,
+        courseId: quiz.courseId,
+        questions: shuffledQuestions
+      }
     });
 
   } catch (error) {
 
-    res.status(500).json({
+    console.log(error);
+
+    return res.status(500).json({
       success: false,
       message: error.message
     });
 
   }
-
 };
 
 // ===============================
-// CREATE QUIZ
-// POST /api/quiz
+// CREATE OR UPDATE QUIZ
+// POST /api/quiz/create
 // ===============================
 const createQuiz = async (req, res) => {
 
@@ -50,28 +53,45 @@ const createQuiz = async (req, res) => {
 
     const { courseId, questions } = req.body;
 
-    if (!courseId || !questions || questions.length === 0) {
+    if (!courseId) {
       return res.status(400).json({
         success: false,
-        message: "CourseId and Questions are required"
+        message: "Course ID is required"
       });
     }
 
+    if (!questions || questions.length < 3) {
+      return res.status(400).json({
+        success: false,
+        message: "Minimum 3 questions required"
+      });
+    }
+
+    // Check if quiz already exists
     const existingQuiz = await Quiz.findOne({ courseId });
 
+    // Update existing quiz
     if (existingQuiz) {
-      return res.status(400).json({
-        success: false,
-        message: "Quiz already exists for this course"
+
+      existingQuiz.questions = questions;
+
+      await existingQuiz.save();
+
+      return res.status(200).json({
+        success: true,
+        message: "Quiz updated successfully",
+        quiz: existingQuiz
       });
+
     }
 
+    // Create new quiz
     const quiz = await Quiz.create({
       courseId,
       questions
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: "Quiz created successfully",
       quiz
@@ -79,7 +99,9 @@ const createQuiz = async (req, res) => {
 
   } catch (error) {
 
-    res.status(500).json({
+    console.log(error);
+
+    return res.status(500).json({
       success: false,
       message: error.message
     });
@@ -87,6 +109,7 @@ const createQuiz = async (req, res) => {
   }
 
 };
+
 // ===============================
 // SUBMIT QUIZ
 // POST /api/quiz/submit
@@ -98,43 +121,44 @@ const submitQuiz = async (req, res) => {
     const { courseId, answers } = req.body;
 
     if (!courseId || !answers) {
-
       return res.status(400).json({
         success: false,
         message: "CourseId and answers are required"
       });
-
     }
 
     const quiz = await Quiz.findOne({ courseId });
 
     if (!quiz) {
-
       return res.status(404).json({
         success: false,
         message: "Quiz not found"
       });
-
     }
 
     let score = 0;
 
-    quiz.questions.forEach((q) => {
+    quiz.questions.forEach((question) => {
 
-      const userAnswer =
-        (answers[q._id] || "")
-          .trim()
-          .toLowerCase();
+      const questionId = String(question._id);
 
-      const correctAnswer =
-        (q.answer || "")
-          .trim()
-          .toLowerCase();
+      const userAnswer = String(
+        answers[questionId] || ""
+      )
+        .trim()
+        .toLowerCase();
 
-      console.log("----------------------------");
-      console.log("Question :", q.question);
-      console.log("User     :", userAnswer);
-      console.log("Correct  :", correctAnswer);
+      const correctAnswer = String(
+        question.answer || ""
+      )
+        .trim()
+        .toLowerCase();
+
+      console.log("===========================");
+      console.log("Question :", question.question);
+      console.log("Question ID :", questionId);
+      console.log("User Answer :", userAnswer);
+      console.log("Correct Answer :", correctAnswer);
 
       if (userAnswer === correctAnswer) {
         score++;
@@ -148,43 +172,36 @@ const submitQuiz = async (req, res) => {
       (score / totalQuestions) * 100
     );
 
-    res.status(200).json({
-
+    return res.status(200).json({
       success: true,
-
       totalQuestions,
-
       correctAnswers: score,
-
       percentage,
-
       passed: percentage >= 70,
-
       message:
         percentage >= 70
           ? "Quiz Passed"
           : "Quiz Failed"
-
     });
 
-  }
-  catch (error) {
+  } catch (error) {
 
     console.log("Submit Quiz Error:", error);
 
-    res.status(500).json({
-
+    return res.status(500).json({
       success: false,
-
       message: error.message
-
     });
 
   }
 
 };
+
+// ===============================
+// EXPORTS
+// ===============================
 module.exports = {
-  createQuiz,
   getQuizByCourse,
+  createQuiz,
   submitQuiz
 };

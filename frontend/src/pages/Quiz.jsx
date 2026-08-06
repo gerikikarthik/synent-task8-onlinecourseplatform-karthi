@@ -37,20 +37,24 @@ export default function Quiz() {
         }
       );
 
-      const quizQuestions =
-        res.data.questions ||
-        res.data.quiz?.questions ||
-        [];
+      let quizQuestions = [];
 
-      const shuffledQuestions = [...quizQuestions].sort(
+      if (res.data.quiz) {
+        quizQuestions = res.data.quiz.questions;
+      } else if (res.data.questions) {
+        quizQuestions = res.data.questions;
+      }
+
+      // Shuffle only once
+      const shuffled = [...quizQuestions].sort(
         () => Math.random() - 0.5
       );
 
-      setQuestions(shuffledQuestions);
+      setQuestions(shuffled);
 
     } catch (error) {
 
-      console.log(error);
+      console.log("LOAD QUIZ ERROR:", error);
 
       alert(
         error.response?.data?.message ||
@@ -64,7 +68,6 @@ export default function Quiz() {
     }
 
   };
-
   // ==========================
   // SELECT ANSWER
   // ==========================
@@ -76,6 +79,7 @@ export default function Quiz() {
     }));
 
   };
+
   // ==========================
   // SUBMIT QUIZ
   // ==========================
@@ -86,40 +90,6 @@ export default function Quiz() {
       return;
     }
 
-    let score = 0;
-
-    questions.forEach((q) => {
-
-      const selectedAnswer =
-        (answers[String(q._id)] || "")
-          .trim()
-          .toLowerCase();
-
-      // Remove "Correct Answer:" if it exists
-      const correctAnswer =
-        (q.answer || "")
-          .replace(/^correct answer\s*:\s*/i, "")
-          .trim()
-          .toLowerCase();
-
-      console.log("Question:", q.question);
-      console.log("Selected:", selectedAnswer);
-      console.log("Correct:", correctAnswer);
-
-      if (selectedAnswer === correctAnswer) {
-        score++;
-      }
-
-    });
-
-    const percentage = Math.round(
-      (score / questions.length) * 100
-    );
-
-    console.log("Answers:", answers);
-    console.log("Score:", score);
-    console.log("Percentage:", percentage);
-
     try {
 
       const token = localStorage.getItem("token");
@@ -128,7 +98,7 @@ export default function Quiz() {
         `${API}/quiz/submit`,
         {
           courseId: id,
-          answers,
+          answers: answers,
         },
         {
           headers: {
@@ -139,48 +109,50 @@ export default function Quiz() {
 
       console.log("Backend Result:", res.data);
 
-    } catch (error) {
+      const result = res.data;
 
-      console.log(
-        "Submit Error:",
-        error.response?.data
-      );
+      if (result.passed) {
 
-    }
-
-    if (percentage >= 70) {
-
-      alert(
-        `🎉 Congratulations!\n\nScore: ${percentage}%`
-      );
-
-      navigate(`/certificate/${id}`);
-
-    } else {
-
-      alert(
-        `❌ You Failed!\n\nScore: ${percentage}%`
-      );
-
-      const retry = window.confirm(
-        "Do you want to retry the quiz?"
-      );
-
-      if (retry) {
-
-        const shuffled = [...questions].sort(
-          () => Math.random() - 0.5
+        alert(
+          `🎉 Congratulations!\n\nCorrect Answers: ${result.correctAnswers}/${result.totalQuestions}\nScore: ${result.percentage}%`
         );
 
-        setQuestions(shuffled);
-        setCurrentQuestion(0);
-        setAnswers({});
+        navigate(`/certificate/${id}`);
 
       } else {
 
-        navigate(`/learn/${id}`);
+        alert(
+          `❌ You Failed!\n\nCorrect Answers: ${result.correctAnswers}/${result.totalQuestions}\nScore: ${result.percentage}%`
+        );
+
+        const retry = window.confirm(
+          "Do you want to retry the quiz?"
+        );
+
+        if (retry) {
+
+          setCurrentQuestion(0);
+          setAnswers({});
+
+          // Shuffle questions again
+          setQuestions((prev) => [...prev].sort(() => Math.random() - 0.5));
+
+        } else {
+
+          navigate(`/learn/${id}`);
+
+        }
 
       }
+
+    } catch (error) {
+
+      console.log("SUBMIT ERROR:", error.response?.data);
+
+      alert(
+        error.response?.data?.message ||
+        "Quiz submit failed"
+      );
 
     }
 

@@ -66,7 +66,8 @@ function AddCourse() {
 
       navigate("/admin");
 
-    } catch (err) {
+    } catch (err) {ok
+
 
       console.log(err);
 

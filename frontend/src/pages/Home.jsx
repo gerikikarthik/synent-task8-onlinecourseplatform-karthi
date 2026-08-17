@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import Hero from "../components/Hero";
 import FeaturedCourses from "../components/FeaturedCourses";
 import Categories from "../components/Categories";
@@ -7,7 +8,10 @@ import FAQ from "../components/FAQ";
 import Stats from "../components/Stats";
 import Companies from "../components/Companies";
 import Newsletter from "../components/Newsletter";
+
 export default function Home() {
+  const [searchQuery, setSearchQuery] = useState("");
+
   return (
     <div
       style={{
@@ -15,17 +19,25 @@ export default function Home() {
         minHeight: "100vh",
       }}
     >
-      <Hero />
+      <Hero
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+      />
 
       <Categories />
 
-      <FeaturedCourses />
+      <FeaturedCourses searchQuery={searchQuery} />
 
       <Features />
-<Companies />
-<FAQ />
-<Stats />
-<Newsletter />
+
+      <Companies />
+
+      <FAQ />
+
+      <Stats />
+
+      <Newsletter />
+
       <Footer />
     </div>
   );

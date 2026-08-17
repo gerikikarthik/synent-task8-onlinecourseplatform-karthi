@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { generateRoadmap } from "../services/aiService";
+
+import {
+  generateRoadmap,
+  generateCodingQuestions,
+} from "../services/aiService";
+
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
@@ -26,23 +31,41 @@ function AIRoadmap() {
 
   const [selectedTopic, setSelectedTopic] = useState(null);
 
-  const [completedTopics, setCompletedTopics] = useState(() => {
-    try {
-      const saved = localStorage.getItem(
-        "aiRoadmapCompletedTopics"
-      );
+  // =====================================================
+  // CODING STATES
+  // =====================================================
 
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [codingQuestions, setCodingQuestions] = useState([]);
+
+  const [codingLoading, setCodingLoading] = useState(false);
+
+  // =====================================================
+  // COMPLETED TOPICS
+  // =====================================================
+
+  const [completedTopics, setCompletedTopics] =
+    useState(() => {
+      try {
+        const saved = localStorage.getItem(
+          "aiRoadmapCompletedTopics"
+        );
+
+        return saved ? JSON.parse(saved) : [];
+      } catch {
+        return [];
+      }
+    });
+
+  // =====================================================
+  // QUIZ STATES
+  // =====================================================
 
   const [quizTopic, setQuizTopic] = useState(null);
 
   const [quizAnswers, setQuizAnswers] = useState({});
 
-  const [quizSubmitted, setQuizSubmitted] = useState(false);
+  const [quizSubmitted, setQuizSubmitted] =
+    useState(false);
 
   const [quizScore, setQuizScore] = useState(0);
 
@@ -68,9 +91,15 @@ function AIRoadmap() {
       setRoadmap(res.roadmap);
 
       setSelectedTopic(null);
+
+      setCodingQuestions([]);
+
       setQuizTopic(null);
+
       setQuizAnswers({});
+
       setQuizSubmitted(false);
+
       setQuizScore(0);
     } catch (err) {
       console.log(err);
@@ -91,7 +120,8 @@ function AIRoadmap() {
   // =====================================================
 
   const downloadRoadmap = () => {
-    const input = document.getElementById("roadmap");
+    const input =
+      document.getElementById("roadmap");
 
     if (!input) {
       return;
@@ -102,7 +132,8 @@ function AIRoadmap() {
       useCORS: true,
       backgroundColor: "#ffffff",
     }).then((canvas) => {
-      const imgData = canvas.toDataURL("image/png");
+      const imgData =
+        canvas.toDataURL("image/png");
 
       const pdf = new jsPDF(
         "p",
@@ -114,11 +145,13 @@ function AIRoadmap() {
       const pageHeight = 297;
 
       const imgWidth = pageWidth;
+
       const imgHeight =
         (canvas.height * imgWidth) /
         canvas.width;
 
       let heightLeft = imgHeight;
+
       let position = 0;
 
       pdf.addImage(
@@ -133,7 +166,8 @@ function AIRoadmap() {
       heightLeft -= pageHeight;
 
       while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
+        position =
+          heightLeft - imgHeight;
 
         pdf.addPage();
 
@@ -216,9 +250,10 @@ function AIRoadmap() {
   // =====================================================
 
   const openVideo = (topic) => {
-    const searchQuery = encodeURIComponent(
-      `${topic} tutorial for beginners`
-    );
+    const searchQuery =
+      encodeURIComponent(
+        `${topic} tutorial for beginners`
+      );
 
     window.open(
       `https://www.youtube.com/results?search_query=${searchQuery}`,
@@ -232,7 +267,9 @@ function AIRoadmap() {
   // INTERVIEW QUESTIONS
   // =====================================================
 
-  const getInterviewQuestions = (topic) => {
+  const getInterviewQuestions = (
+    topic
+  ) => {
     return [
       `What is ${topic} and why is it important?`,
       `Explain the main concepts of ${topic}.`,
@@ -243,24 +280,74 @@ function AIRoadmap() {
   };
 
   // =====================================================
-  // CODING QUESTIONS
+  // GENERATE CODING QUESTIONS
   // =====================================================
 
-  const getCodingQuestions = (topic) => {
-    return [
-      `Write a basic program related to ${topic}.`,
-      `Implement a simple problem using ${topic}.`,
-      `Solve a real-world problem using ${topic}.`,
-      `Write an optimized solution using ${topic}.`,
-      `Explain the time and space complexity of your solution.`,
-    ];
+  const loadCodingQuestions = async (
+    topic
+  ) => {
+    if (!topic) {
+      return;
+    }
+
+    try {
+      setCodingLoading(true);
+
+      setCodingQuestions([]);
+
+      const res =
+        await generateCodingQuestions(
+          topic,
+          career
+        );
+
+      console.log(
+        "CODING QUESTIONS RESPONSE:",
+        res
+      );
+
+      const questions =
+        res.data?.questions || [];
+
+      setCodingQuestions(questions);
+    } catch (error) {
+      console.error(
+        "Coding Questions Error:",
+        error
+      );
+
+      alert(
+        error.response?.data?.message ||
+          "Failed to generate coding questions"
+      );
+    } finally {
+      setCodingLoading(false);
+    }
+  };
+
+  // =====================================================
+  // OPEN CODING PRACTICE PAGE
+  // =====================================================
+
+  const openCodingPractice = (
+    question
+  ) => {
+    navigate("/coding-practice", {
+      state: {
+        question,
+        topic: selectedTopic,
+        career,
+      },
+    });
   };
 
   // =====================================================
   // QUIZ QUESTIONS
   // =====================================================
 
-  const getQuizQuestions = (topic) => {
+  const getQuizQuestions = (
+    topic
+  ) => {
     return [
       {
         question: `What is the primary purpose of ${topic}?`,
@@ -272,6 +359,7 @@ function AIRoadmap() {
         ],
         answer: 0,
       },
+
       {
         question: `Which approach is best when learning ${topic}?`,
         options: [
@@ -282,6 +370,7 @@ function AIRoadmap() {
         ],
         answer: 1,
       },
+
       {
         question: `Which is important for becoming good at ${topic}?`,
         options: [
@@ -292,6 +381,7 @@ function AIRoadmap() {
         ],
         answer: 0,
       },
+
       {
         question: `How should you prepare ${topic} for interviews?`,
         options: [
@@ -302,6 +392,7 @@ function AIRoadmap() {
         ],
         answer: 1,
       },
+
       {
         question: `What helps most with ${topic}?`,
         options: [
@@ -321,8 +412,11 @@ function AIRoadmap() {
 
   const startQuiz = (topic) => {
     setQuizTopic(topic);
+
     setQuizAnswers({});
+
     setQuizSubmitted(false);
+
     setQuizScore(0);
   };
 
@@ -340,7 +434,8 @@ function AIRoadmap() {
 
     setQuizAnswers({
       ...quizAnswers,
-      [questionIndex]: answerIndex,
+      [questionIndex]:
+        answerIndex,
     });
   };
 
@@ -370,6 +465,7 @@ function AIRoadmap() {
     );
 
     setQuizScore(score);
+
     setQuizSubmitted(true);
 
     if (score >= 3) {
@@ -412,7 +508,9 @@ function AIRoadmap() {
       (module) => {
         module.topics?.forEach(
           (topic) => {
-            if (isTopicCompleted(topic)) {
+            if (
+              isTopicCompleted(topic)
+            ) {
               count++;
             }
           }
@@ -423,7 +521,8 @@ function AIRoadmap() {
     return count;
   };
 
-  const totalTopics = getTotalTopics();
+  const totalTopics =
+    getTotalTopics();
 
   const completedTopicCount =
     getCompletedTopicCount();
@@ -452,9 +551,12 @@ function AIRoadmap() {
     >
       <div className="container">
 
-        {/* HEADER */}
+        {/* =================================================
+            HEADER
+        ================================================= */}
 
         <div className="text-center mb-5">
+
           <div
             style={{
               fontSize: "55px",
@@ -476,9 +578,12 @@ function AIRoadmap() {
             Your personalized AI-powered
             learning journey
           </p>
+
         </div>
 
-        {/* GENERATOR */}
+        {/* =================================================
+            GENERATOR
+        ================================================= */}
 
         <form
           onSubmit={(e) => {
@@ -490,11 +595,13 @@ function AIRoadmap() {
             borderRadius: "20px",
           }}
         >
+
           <div className="row">
 
             {/* CAREER */}
 
             <div className="col-md-4 mb-3">
+
               <label className="form-label fw-bold">
                 Career
               </label>
@@ -506,11 +613,13 @@ function AIRoadmap() {
                 readOnly
                 placeholder="Select career"
               />
+
             </div>
 
             {/* EXPERIENCE */}
 
             <div className="col-md-4 mb-3">
+
               <label className="form-label fw-bold">
                 Experience
               </label>
@@ -524,6 +633,7 @@ function AIRoadmap() {
                   )
                 }
               >
+
                 <option value="Beginner">
                   🟢 Beginner
                 </option>
@@ -535,12 +645,15 @@ function AIRoadmap() {
                 <option value="Advanced">
                   🔴 Advanced
                 </option>
+
               </select>
+
             </div>
 
             {/* DAILY TIME */}
 
             <div className="col-md-4 mb-3">
+
               <label className="form-label fw-bold">
                 Daily Study Time
               </label>
@@ -554,6 +667,7 @@ function AIRoadmap() {
                   )
                 }
               >
+
                 <option value="1 Hour">
                   1 Hour / Day
                 </option>
@@ -577,8 +691,11 @@ function AIRoadmap() {
                 <option value="6 Hours">
                   6 Hours / Day
                 </option>
+
               </select>
+
             </div>
+
           </div>
 
           <button
@@ -590,12 +707,16 @@ function AIRoadmap() {
               ? "🤖 Generating AI Roadmap..."
               : "🚀 Generate AI Roadmap"}
           </button>
+
         </form>
 
-        {/* LOADING */}
+        {/* =================================================
+            LOADING
+        ================================================= */}
 
         {loading && (
           <div className="text-center my-5">
+
             <div
               className="spinner-border text-primary"
               style={{
@@ -608,15 +729,21 @@ function AIRoadmap() {
               AI is building your
               personalized roadmap...
             </h5>
+
           </div>
         )}
 
-        {/* ROADMAP */}
+        {/* =================================================
+            ROADMAP
+        ================================================= */}
 
         {roadmap && !loading && (
+
           <div id="roadmap">
 
-            {/* ROADMAP HEADER */}
+            {/* =================================================
+                ROADMAP HEADER
+            ================================================= */}
 
             <div
               className="card border-0 shadow-lg mb-4"
@@ -624,6 +751,7 @@ function AIRoadmap() {
                 borderRadius: "20px",
               }}
             >
+
               <div className="card-body text-center p-5">
 
                 <span className="badge bg-primary fs-6 px-3 py-2">
@@ -642,7 +770,9 @@ function AIRoadmap() {
                 {/* PROGRESS */}
 
                 <div className="mt-4 text-start">
+
                   <div className="d-flex justify-content-between">
+
                     <strong>
                       Learning Progress
                     </strong>
@@ -650,6 +780,7 @@ function AIRoadmap() {
                     <strong className="text-success">
                       {overallProgress}%
                     </strong>
+
                   </div>
 
                   <div
@@ -659,12 +790,14 @@ function AIRoadmap() {
                       borderRadius: "15px",
                     }}
                   >
+
                     <div
                       className="progress-bar bg-success"
                       style={{
                         width: `${overallProgress}%`,
                       }}
                     ></div>
+
                   </div>
 
                   <small className="text-muted">
@@ -672,15 +805,20 @@ function AIRoadmap() {
                     {totalTopics} topics
                     completed
                   </small>
+
                 </div>
 
               </div>
+
             </div>
 
-            {/* MODULES */}
+            {/* =================================================
+                MODULES
+            ================================================= */}
 
             {roadmap.modules?.map(
               (module, index) => (
+
                 <div
                   key={index}
                   className="card border-0 shadow mb-4"
@@ -688,19 +826,26 @@ function AIRoadmap() {
                     borderRadius: "18px",
                   }}
                 >
+
                   <div className="card-body p-4">
 
                     <div className="d-flex justify-content-between align-items-center mb-3">
+
                       <h4 className="text-success fw-bold mb-0">
+
                         📘 Module{" "}
                         {index + 1}:{" "}
                         {module.title}
+
                       </h4>
 
                       <span className="badge bg-light text-dark">
+
                         ⏳{" "}
                         {module.duration}
+
                       </span>
+
                     </div>
 
                     <h5 className="mb-3">
@@ -708,12 +853,15 @@ function AIRoadmap() {
                     </h5>
 
                     <div className="row">
+
                       {module.topics?.map(
                         (topic, i) => (
+
                           <div
                             className="col-md-6 mb-3"
                             key={i}
                           >
+
                             <div
                               className="card h-100 border"
                               style={{
@@ -722,27 +870,37 @@ function AIRoadmap() {
                                 cursor:
                                   "pointer",
                               }}
-                              onClick={() =>
+                              onClick={() => {
                                 setSelectedTopic(
                                   topic
-                                )
-                              }
+                                );
+
+                                setCodingQuestions(
+                                  []
+                                );
+                              }}
                             >
+
                               <div className="card-body">
 
                                 <div className="d-flex justify-content-between">
+
                                   <h5 className="fw-bold">
+
                                     {isTopicCompleted(
                                       topic
                                     )
                                       ? "✅"
                                       : "📚"}{" "}
+
                                     {topic}
+
                                   </h5>
 
                                   <span className="badge bg-primary">
                                     Learn
                                   </span>
+
                                 </div>
 
                                 <p className="text-muted mb-0">
@@ -751,19 +909,29 @@ function AIRoadmap() {
                                 </p>
 
                               </div>
+
                             </div>
+
                           </div>
+
                         )
                       )}
+
                     </div>
+
                   </div>
+
                 </div>
+
               )
             )}
 
-            {/* TOPIC LEARNING PANEL */}
+            {/* =================================================
+                TOPIC LEARNING PANEL
+            ================================================= */}
 
             {selectedTopic && (
+
               <div
                 className="card border-0 shadow-lg mb-5"
                 style={{
@@ -771,7 +939,11 @@ function AIRoadmap() {
                   overflow: "hidden",
                 }}
               >
+
+                {/* TOPIC HEADER */}
+
                 <div className="card-header bg-primary text-white p-4">
+
                   <div className="d-flex justify-content-between align-items-center">
 
                     <h3 className="mb-0">
@@ -780,34 +952,37 @@ function AIRoadmap() {
 
                     <button
                       className="btn btn-light"
-                      onClick={() =>
-                        setSelectedTopic(
-                          null
-                        )
-                      }
+                      onClick={() => {
+                        setSelectedTopic(null);
+                        setCodingQuestions([]);
+                      }}
                     >
                       ✕ Close
                     </button>
 
                   </div>
+
                 </div>
 
                 <div className="card-body p-4">
 
-                  {/* RESOURCE CARDS */}
+                  {/* =================================================
+                      RESOURCE CARDS
+                  ================================================= */}
 
                   <div className="row">
 
                     {/* VIDEO */}
 
                     <div className="col-lg-3 col-md-6 mb-4">
+
                       <div className="card h-100 shadow-sm border-0">
+
                         <div className="card-body text-center">
 
                           <div
                             style={{
-                              fontSize:
-                                "45px",
+                              fontSize: "45px",
                             }}
                           >
                             📺
@@ -835,33 +1010,34 @@ function AIRoadmap() {
                           </button>
 
                         </div>
+
                       </div>
+
                     </div>
 
                     {/* INTERVIEW */}
 
                     <div className="col-lg-3 col-md-6 mb-4">
+
                       <div className="card h-100 shadow-sm border-0">
+
                         <div className="card-body text-center">
 
                           <div
                             style={{
-                              fontSize:
-                                "45px",
+                              fontSize: "45px",
                             }}
                           >
                             📝
                           </div>
 
                           <h5 className="fw-bold mt-2">
-                            Interview
-                            Questions
+                            Interview Questions
                           </h5>
 
                           <p className="text-muted">
                             Prepare important
-                            interview
-                            questions.
+                            interview questions.
                           </p>
 
                           <button
@@ -881,19 +1057,22 @@ function AIRoadmap() {
                           </button>
 
                         </div>
+
                       </div>
+
                     </div>
 
                     {/* CODING */}
 
                     <div className="col-lg-3 col-md-6 mb-4">
+
                       <div className="card h-100 shadow-sm border-0">
+
                         <div className="card-body text-center">
 
                           <div
                             style={{
-                              fontSize:
-                                "45px",
+                              fontSize: "45px",
                             }}
                           >
                             💻
@@ -904,40 +1083,55 @@ function AIRoadmap() {
                           </h5>
 
                           <p className="text-muted">
-                            Practice coding
-                            problems.
+                            AI-generated problems
+                            related to{" "}
+                            {selectedTopic}.
                           </p>
 
                           <button
                             className="btn btn-dark w-100"
-                            onClick={() =>
-                              document
-                                .getElementById(
-                                  "coding-section"
-                                )
-                                ?.scrollIntoView({
-                                  behavior:
-                                    "smooth",
-                                })
+                            disabled={
+                              codingLoading
                             }
+                            onClick={async () => {
+                              await loadCodingQuestions(
+                                selectedTopic
+                              );
+
+                              setTimeout(() => {
+                                document
+                                  .getElementById(
+                                    "coding-section"
+                                  )
+                                  ?.scrollIntoView({
+                                    behavior:
+                                      "smooth",
+                                  });
+                              }, 300);
+                            }}
                           >
-                            Start Coding
+                            {codingLoading
+                              ? "🤖 Generating..."
+                              : "💻 Start Coding"}
                           </button>
 
                         </div>
+
                       </div>
+
                     </div>
 
                     {/* QUIZ */}
 
                     <div className="col-lg-3 col-md-6 mb-4">
+
                       <div className="card h-100 shadow-sm border-0">
+
                         <div className="card-body text-center">
 
                           <div
                             style={{
-                              fontSize:
-                                "45px",
+                              fontSize: "45px",
                             }}
                           >
                             🧪
@@ -963,17 +1157,22 @@ function AIRoadmap() {
                           </button>
 
                         </div>
+
                       </div>
+
                     </div>
 
                   </div>
 
-                  {/* INTERVIEW QUESTIONS */}
+                  {/* =================================================
+                      INTERVIEW QUESTIONS
+                  ================================================= */}
 
                   <div
                     id="interview-section"
                     className="mt-4"
                   >
+
                     <h4 className="fw-bold text-warning">
                       📝 Interview Questions
                     </h4>
@@ -985,69 +1184,241 @@ function AIRoadmap() {
                         question,
                         index
                       ) => (
+
                         <div
                           className="card border-0 shadow-sm mb-2"
                           key={index}
                         >
+
                           <div className="card-body">
+
                             <strong>
                               Q{index + 1}.
                             </strong>{" "}
+
                             {question}
+
                           </div>
+
                         </div>
+
                       )
                     )}
+
                   </div>
 
-                  {/* CODING QUESTIONS */}
+                  {/* =================================================
+                      CODING QUESTIONS
+                  ================================================= */}
 
                   <div
                     id="coding-section"
                     className="mt-5"
                   >
-                    <h4 className="fw-bold text-dark">
-                      💻 Coding Practice
-                    </h4>
 
-                    {getCodingQuestions(
-                      selectedTopic
-                    ).map(
-                      (
-                        question,
-                        index
-                      ) => (
-                        <div
-                          className="card border-0 shadow-sm mb-2"
-                          key={index}
-                        >
-                          <div className="card-body">
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+
+                      <h4 className="fw-bold text-dark mb-0">
+                        💻 Coding Practice
+                      </h4>
+
+                      {codingQuestions.length > 0 && (
+                        <span className="badge bg-success">
+                          {codingQuestions.length} Problems
+                        </span>
+                      )}
+
+                    </div>
+
+                    {/* INITIAL MESSAGE */}
+
+                    {!codingLoading &&
+                      codingQuestions.length ===
+                        0 && (
+
+                        <div className="alert alert-secondary">
+
+                          <strong>
+                            💡 Ready to practice?
+                          </strong>
+
+                          <p className="mb-0 mt-1">
+                            Click{" "}
                             <strong>
-                              Problem{" "}
-                              {index + 1}:
+                              Start Coding
                             </strong>{" "}
-                            {question}
+                            above to generate
+                            coding problems
+                            specifically for{" "}
+                            <strong>
+                              {selectedTopic}
+                            </strong>.
+                          </p>
 
-                            <button
-                              className="btn btn-outline-dark btn-sm float-end"
-                              onClick={() =>
-                                alert(
-                                  `Practice this problem: ${question}`
-                                )
-                              }
-                            >
-                              Practice
-                            </button>
-                          </div>
                         </div>
-                      )
+
+                      )}
+
+                    {/* LOADING */}
+
+                    {codingLoading && (
+
+                      <div className="text-center py-5">
+
+                        <div
+                          className="spinner-border text-dark"
+                          style={{
+                            width: "3rem",
+                            height: "3rem",
+                          }}
+                        ></div>
+
+                        <h5 className="mt-3">
+                          🤖 AI is creating
+                          coding problems...
+                        </h5>
+
+                        <p className="text-muted">
+                          Creating LeetCode-style
+                          questions for{" "}
+                          {selectedTopic}
+                        </p>
+
+                      </div>
+
                     )}
+
+                    {/* QUESTIONS */}
+
+                    {!codingLoading &&
+                      codingQuestions.length >
+                        0 && (
+
+                        <div>
+
+                          {codingQuestions.map(
+                            (
+                              question,
+                              index
+                            ) => (
+
+                              <div
+                                className="card border-0 shadow-sm mb-3"
+                                key={
+                                  question.id ||
+                                  index
+                                }
+                              >
+
+                                <div className="card-body">
+
+                                  <div className="d-flex justify-content-between align-items-start">
+
+                                    <div>
+
+                                      <h5 className="fw-bold mb-2">
+
+                                        Problem{" "}
+                                        {index + 1}:{" "}
+                                        {question.title}
+
+                                      </h5>
+
+                                      <span
+                                        className={
+                                          question.difficulty ===
+                                          "Medium"
+                                            ? "badge bg-warning text-dark"
+                                            : "badge bg-success"
+                                        }
+                                      >
+                                        {question.difficulty ||
+                                          "Easy"}
+                                      </span>
+
+                                    </div>
+
+                                    <button
+                                      className="btn btn-dark"
+                                      onClick={() =>
+                                        openCodingPractice(
+                                          question
+                                        )
+                                      }
+                                    >
+                                      💻 Practice
+                                    </button>
+
+                                  </div>
+
+                                  <p className="text-muted mt-3 mb-0">
+
+                                    {question.description}
+
+                                  </p>
+
+                                  {question.examples?.[0] && (
+
+                                    <div className="bg-light rounded p-3 mt-3">
+
+                                      <strong>
+                                        Example:
+                                      </strong>
+
+                                      <div className="mt-2">
+
+                                        <div>
+                                          <strong>
+                                            Input:
+                                          </strong>{" "}
+                                          <code>
+                                            {
+                                              question
+                                                .examples[0]
+                                                .input
+                                            }
+                                          </code>
+                                        </div>
+
+                                        <div>
+                                          <strong>
+                                            Output:
+                                          </strong>{" "}
+                                          <code>
+                                            {
+                                              question
+                                                .examples[0]
+                                                .output
+                                            }
+                                          </code>
+                                        </div>
+
+                                      </div>
+
+                                    </div>
+
+                                  )}
+
+                                </div>
+
+                              </div>
+
+                            )
+                          )}
+
+                        </div>
+
+                      )}
+
                   </div>
 
-                  {/* QUIZ */}
+                  {/* =================================================
+                      QUIZ
+                  ================================================= */}
 
                   {quizTopic ===
                     selectedTopic && (
+
                     <div className="mt-5">
 
                       <h4 className="fw-bold text-success">
@@ -1063,17 +1434,21 @@ function AIRoadmap() {
                           question,
                           index
                         ) => (
+
                           <div
                             className="card border-0 shadow-sm mb-3"
                             key={index}
                           >
+
                             <div className="card-body">
 
                               <h6 className="fw-bold">
+
                                 Q{index + 1}.{" "}
                                 {
                                   question.question
                                 }
+
                               </h6>
 
                               {question.options.map(
@@ -1081,12 +1456,14 @@ function AIRoadmap() {
                                   option,
                                   optionIndex
                                 ) => (
+
                                   <div
                                     className="form-check mb-2"
                                     key={
                                       optionIndex
                                     }
                                   >
+
                                     <input
                                       className="form-check-input"
                                       type="radio"
@@ -1111,11 +1488,14 @@ function AIRoadmap() {
                                     <label className="form-check-label">
                                       {option}
                                     </label>
+
                                   </div>
+
                                 )
                               )}
 
                               {quizSubmitted && (
+
                                 <div
                                   className={
                                     quizAnswers[
@@ -1126,25 +1506,32 @@ function AIRoadmap() {
                                       : "text-danger"
                                   }
                                 >
+
                                   {quizAnswers[
                                     index
                                   ] ===
                                   question.answer
                                     ? "✅ Correct"
                                     : `❌ Correct answer: ${
-                                        question.options[
+                                        question
+                                          .options[
                                           question.answer
                                         ]
                                       }`}
+
                                 </div>
+
                               )}
 
                             </div>
+
                           </div>
+
                         )
                       )}
 
                       {!quizSubmitted ? (
+
                         <button
                           className="btn btn-success btn-lg"
                           onClick={
@@ -1153,44 +1540,62 @@ function AIRoadmap() {
                         >
                           Submit Quiz
                         </button>
+
                       ) : (
+
                         <div className="alert alert-info mt-3">
+
                           <h4>
                             🎯 Your Score:{" "}
                             {quizScore}/5
                           </h4>
 
                           {quizScore >= 3 ? (
+
                             <p className="text-success fw-bold mb-0">
                               🎉 Great job! Topic
                               completed.
                             </p>
+
                           ) : (
+
                             <p className="mb-0">
                               Keep practicing
                               and try again.
                             </p>
+
                           )}
+
                         </div>
+
                       )}
 
                     </div>
+
                   )}
 
-                  {/* COMPLETE TOPIC */}
+                  {/* =================================================
+                      COMPLETE TOPIC
+                  ================================================= */}
 
                   <div className="text-center mt-5">
 
                     {isTopicCompleted(
                       selectedTopic
                     ) ? (
+
                       <div className="alert alert-success">
+
                         ✅ You have completed{" "}
+
                         <strong>
                           {selectedTopic}
                         </strong>
+
                       </div>
+
                     ) : (
+
                       <button
                         className="btn btn-outline-success btn-lg"
                         onClick={() =>
@@ -1202,15 +1607,20 @@ function AIRoadmap() {
                         ✅ Mark Topic as
                         Completed
                       </button>
+
                     )}
 
                   </div>
 
                 </div>
+
               </div>
+
             )}
 
-            {/* BOTTOM BUTTONS */}
+            {/* =================================================
+                BOTTOM BUTTONS
+            ================================================= */}
 
             <div className="text-center mt-5 mb-5">
 
@@ -1225,7 +1635,9 @@ function AIRoadmap() {
 
               <button
                 className="btn btn-primary btn-lg mb-2"
-                onClick={downloadRoadmap}
+                onClick={
+                  downloadRoadmap
+                }
               >
                 📄 Download AI Roadmap PDF
               </button>
@@ -1233,7 +1645,9 @@ function AIRoadmap() {
             </div>
 
           </div>
+
         )}
+
       </div>
     </div>
   );

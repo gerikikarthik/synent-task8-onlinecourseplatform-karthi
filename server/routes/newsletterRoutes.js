@@ -2,6 +2,10 @@ const express = require("express");
 const router = express.Router();
 const Newsletter = require("../models/Newsletter");
 
+// ===============================
+// SUBSCRIBE TO NEWSLETTER
+// POST /api/newsletter/subscribe
+// ===============================
 router.post("/subscribe", async (req, res) => {
   try {
     const { email } = req.body;
@@ -34,6 +38,30 @@ router.post("/subscribe", async (req, res) => {
 
     res.status(500).json({
       message: "Server error",
+    });
+  }
+});
+
+// ===============================
+// GET NEWSLETTER SUBSCRIBERS
+// GET /api/newsletter/subscribers
+// ===============================
+router.get("/subscribers", async (req, res) => {
+  try {
+    const subscribers = await Newsletter.find()
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      subscribers,
+    });
+  } catch (error) {
+    console.error(
+      "Fetch Newsletter Subscribers Error:",
+      error
+    );
+
+    res.status(500).json({
+      message: "Failed to fetch newsletter subscribers",
     });
   }
 });

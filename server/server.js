@@ -13,7 +13,7 @@ const certificateRoutes = require("./routes/certificateRoutes");
 const cartRoutes = require("./routes/cartRoutes");
 const enrollmentRoutes = require("./routes/enrollmentRoutes");
 const quizRoutes = require("./routes/quizRoutes");
-
+const newsletterRoutes = require("./routes/newsletterRoutes");
 const app = express();
 
 // Database Connection
@@ -38,6 +38,7 @@ app.use("/api/certificate", certificateRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/enroll", enrollmentRoutes);
 app.use("/api/quiz", quizRoutes);
+app.use("/api/newsletter", newsletterRoutes);
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {

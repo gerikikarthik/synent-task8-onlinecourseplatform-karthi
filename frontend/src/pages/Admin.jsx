@@ -27,6 +27,16 @@ export default function Admin() {
   const [reports, setReports] = useState([]);
 
   // ==========================
+  // Newsletter States
+  // ==========================
+
+  const [newsletterSubscribers, setNewsletterSubscribers] =
+    useState([]);
+
+  const [newsletterLoading, setNewsletterLoading] =
+    useState(false);
+
+  // ==========================
   // Course Form
   // ==========================
 
@@ -59,11 +69,9 @@ export default function Admin() {
 
   const [discount, setDiscount] = useState(0);
 
-  const [isPremium, setIsPremium] =
-    useState(true);
+  const [isPremium, setIsPremium] = useState(true);
 
-  const [quizEnabled, setQuizEnabled] =
-    useState(true);
+  const [quizEnabled, setQuizEnabled] = useState(true);
 
   const [whatYouLearn, setWhatYouLearn] =
     useState("");
@@ -90,15 +98,16 @@ export default function Admin() {
   });
 
   // ==========================
-  // Load Dashboard
+  // LOAD DASHBOARD
   // ==========================
 
   useEffect(() => {
     loadDashboard();
+    loadNewsletterSubscribers();
   }, []);
 
   // ==========================
-  // Dashboard API
+  // DASHBOARD API
   // ==========================
 
   const loadDashboard = async () => {
@@ -115,7 +124,6 @@ export default function Admin() {
         enrollRes,
         certificateRes,
       ] = await Promise.all([
-
         axios.get(`${API}/courses`),
 
         axios.get(`${API}/auth/users`, {
@@ -126,12 +134,9 @@ export default function Admin() {
           headers,
         }),
 
-        axios.get(
-          `${API}/certificate/all`,
-          {
-            headers,
-          }
-        ),
+        axios.get(`${API}/certificate/all`, {
+          headers,
+        }),
       ]);
 
       setCourses(courseRes.data);
@@ -155,25 +160,56 @@ export default function Admin() {
 
       setDashboard({
         totalUsers: userRes.data.length,
+
         totalCourses: courseRes.data.length,
+
         totalEnrollments:
-          enrollRes.data.enrollments.length,
+          (enrollRes.data.enrollments || []).length,
+
         totalCertificates:
-          certificateRes.data.certificates.length,
+          (certificateRes.data.certificates || [])
+            .length,
+
         revenue,
       });
-
     } catch (err) {
       console.log(err);
+
       alert("Failed to load dashboard.");
     } finally {
       setLoading(false);
     }
   };
 
-  // =====================================
-  // PART 2 CONTINUES...
-  // =====================================
+  // ==========================
+  // LOAD NEWSLETTER SUBSCRIBERS
+  // ==========================
+
+  const loadNewsletterSubscribers = async () => {
+    try {
+      setNewsletterLoading(true);
+
+      const response = await axios.get(
+        `${API}/newsletter/subscribers`
+      );
+
+      setNewsletterSubscribers(
+        response.data.subscribers || []
+      );
+    } catch (error) {
+      console.log(
+        "Newsletter Subscribers Error:",
+        error
+      );
+
+      alert(
+        "Failed to load newsletter subscribers."
+      );
+    } finally {
+      setNewsletterLoading(false);
+    }
+  };
+
   // ==========================
   // RESET FORM
   // ==========================
@@ -209,7 +245,6 @@ export default function Admin() {
     e.preventDefault();
 
     try {
-
       if (
         !title ||
         !description ||
@@ -222,7 +257,6 @@ export default function Admin() {
       }
 
       const body = {
-
         title,
 
         description,
@@ -255,19 +289,20 @@ export default function Admin() {
 
         whatYouLearn: whatYouLearn
           .split("\n")
-          .filter((x) => x.trim() !== ""),
+          .filter(
+            (x) => x.trim() !== ""
+          ),
 
         courseContent: courseContent
           .split("\n")
-          .filter((x) => x.trim() !== ""),
+          .filter(
+            (x) => x.trim() !== ""
+          ),
       };
 
       await axios.post(
-
         `${API}/courses`,
-
         body,
-
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -280,14 +315,12 @@ export default function Admin() {
       resetForm();
 
       loadDashboard();
-
     } catch (err) {
-
       console.log(err);
 
       alert(
         err.response?.data?.message ||
-        "Unable to add course."
+          "Unable to add course."
       );
     }
   };
@@ -297,13 +330,10 @@ export default function Admin() {
   // ==========================
 
   const updateCourse = async (e) => {
-
     e.preventDefault();
 
     try {
-
       const body = {
-
         title,
 
         description,
@@ -336,19 +366,20 @@ export default function Admin() {
 
         whatYouLearn: whatYouLearn
           .split("\n")
-          .filter((x) => x.trim() !== ""),
+          .filter(
+            (x) => x.trim() !== ""
+          ),
 
         courseContent: courseContent
           .split("\n")
-          .filter((x) => x.trim() !== ""),
+          .filter(
+            (x) => x.trim() !== ""
+          ),
       };
 
       await axios.put(
-
         `${API}/courses/${editingId}`,
-
         body,
-
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -361,14 +392,12 @@ export default function Admin() {
       resetForm();
 
       loadDashboard();
-
     } catch (err) {
-
       console.log(err);
 
       alert(
         err.response?.data?.message ||
-        "Update Failed"
+          "Update Failed"
       );
     }
   };
@@ -378,7 +407,6 @@ export default function Admin() {
   // ==========================
 
   const deleteCourse = async (id) => {
-
     const ok = window.confirm(
       "Delete this course?"
     );
@@ -386,11 +414,8 @@ export default function Admin() {
     if (!ok) return;
 
     try {
-
       await axios.delete(
-
         `${API}/courses/${id}`,
-
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -401,14 +426,12 @@ export default function Admin() {
       alert("Course Deleted");
 
       loadDashboard();
-
     } catch (err) {
-
       console.log(err);
 
       alert(
         err.response?.data?.message ||
-        "Delete Failed"
+          "Delete Failed"
       );
     }
   };
@@ -418,12 +441,13 @@ export default function Admin() {
   // ==========================
 
   const editCourse = (course) => {
-
     setEditingId(course._id);
 
     setTitle(course.title || "");
 
-    setDescription(course.description || "");
+    setDescription(
+      course.description || ""
+    );
 
     setPrice(course.price || "");
 
@@ -431,7 +455,9 @@ export default function Admin() {
 
     setCategory(course.category || "");
 
-    setInstructor(course.instructor || "");
+    setInstructor(
+      course.instructor || ""
+    );
 
     setDuration(course.duration || "");
 
@@ -441,15 +467,21 @@ export default function Admin() {
       course.certificate || "Yes"
     );
 
-    setVideoUrl(course.videoUrl || "");
+    setVideoUrl(
+      course.videoUrl || ""
+    );
 
     setPreviewVideoUrl(
       course.previewVideoUrl || ""
     );
 
-    setNotesUrl(course.notesUrl || "");
+    setNotesUrl(
+      course.notesUrl || ""
+    );
 
-    setDiscount(course.discount || 0);
+    setDiscount(
+      course.discount || 0
+    );
 
     setIsPremium(
       course.isPremium ?? true
@@ -460,11 +492,13 @@ export default function Admin() {
     );
 
     setWhatYouLearn(
-      (course.whatYouLearn || []).join("\n")
+      (course.whatYouLearn || [])
+        .join("\n")
     );
 
     setCourseContent(
-      (course.courseContent || []).join("\n")
+      (course.courseContent || [])
+        .join("\n")
     );
 
     window.scrollTo({
@@ -481,12 +515,11 @@ export default function Admin() {
     courses.filter((course) =>
       course.title
         ?.toLowerCase()
-        .includes(search.toLowerCase())
+        .includes(
+          search.toLowerCase()
+        )
     );
 
-  // ==========================================
-  // PART 3 CONTINUES...
-  // ==========================================
   // ==========================
   // LOADING
   // ==========================
@@ -495,7 +528,9 @@ export default function Admin() {
     return (
       <div
         className="d-flex justify-content-center align-items-center"
-        style={{ height: "100vh" }}
+        style={{
+          height: "100vh",
+        }}
       >
         <div className="spinner-border text-primary" />
       </div>
@@ -503,7 +538,7 @@ export default function Admin() {
   }
 
   // ==========================
-  // UI START
+  // UI
   // ==========================
 
   return (
@@ -515,6 +550,7 @@ export default function Admin() {
         padding: "30px",
       }}
     >
+
       {/* ========================== */}
       {/* HEADER */}
       {/* ========================== */}
@@ -522,7 +558,6 @@ export default function Admin() {
       <div className="d-flex justify-content-between align-items-center mb-4">
 
         <div>
-
           <h2
             style={{
               fontWeight: "bold",
@@ -536,7 +571,6 @@ export default function Admin() {
             Manage Courses, Students, Quiz &
             Certificates
           </p>
-
         </div>
 
         <button
@@ -558,7 +592,6 @@ export default function Admin() {
       <div className="row g-4 mb-5">
 
         <div className="col-lg-2 col-md-4">
-
           <div
             className="card border-0 shadow"
             style={{
@@ -577,11 +610,9 @@ export default function Admin() {
 
             </div>
           </div>
-
         </div>
 
         <div className="col-lg-2 col-md-4">
-
           <div
             className="card border-0 shadow"
             style={{
@@ -600,11 +631,9 @@ export default function Admin() {
 
             </div>
           </div>
-
         </div>
 
         <div className="col-lg-2 col-md-4">
-
           <div
             className="card border-0 shadow"
             style={{
@@ -623,11 +652,9 @@ export default function Admin() {
 
             </div>
           </div>
-
         </div>
 
         <div className="col-lg-3 col-md-6">
-
           <div
             className="card border-0 shadow"
             style={{
@@ -646,11 +673,9 @@ export default function Admin() {
 
             </div>
           </div>
-
         </div>
 
         <div className="col-lg-3 col-md-6">
-
           <div
             className="card border-0 shadow"
             style={{
@@ -672,7 +697,6 @@ export default function Admin() {
 
             </div>
           </div>
-
         </div>
 
       </div>
@@ -718,18 +742,20 @@ export default function Admin() {
 
       </div>
 
-      {/* ==========================
-          PART 3B STARTS HERE
-      ========================== */}
       {/* ========================== */}
-      {/* ADD / EDIT COURSE FORM */}
+      {/* ADD / EDIT COURSE */}
       {/* ========================== */}
 
       <div className="card border-0 shadow-lg mb-5">
+
         <div className="card-header bg-primary text-white">
+
           <h4 className="mb-0">
-            {editingId ? "✏ Edit Course" : "➕ Add New Course"}
+            {editingId
+              ? "✏ Edit Course"
+              : "➕ Add New Course"}
           </h4>
+
         </div>
 
         <div className="card-body">
@@ -773,7 +799,9 @@ export default function Admin() {
                   className="form-control"
                   value={instructor}
                   onChange={(e) =>
-                    setInstructor(e.target.value)
+                    setInstructor(
+                      e.target.value
+                    )
                   }
                 />
 
@@ -790,7 +818,9 @@ export default function Admin() {
                   className="form-control"
                   value={description}
                   onChange={(e) =>
-                    setDescription(e.target.value)
+                    setDescription(
+                      e.target.value
+                    )
                   }
                 />
 
@@ -824,7 +854,9 @@ export default function Admin() {
                   className="form-control"
                   value={category}
                   onChange={(e) =>
-                    setCategory(e.target.value)
+                    setCategory(
+                      e.target.value
+                    )
                   }
                 />
 
@@ -841,7 +873,9 @@ export default function Admin() {
                   className="form-control"
                   value={duration}
                   onChange={(e) =>
-                    setDuration(e.target.value)
+                    setDuration(
+                      e.target.value
+                    )
                   }
                 />
 
@@ -858,7 +892,9 @@ export default function Admin() {
                   className="form-control"
                   value={language}
                   onChange={(e) =>
-                    setLanguage(e.target.value)
+                    setLanguage(
+                      e.target.value
+                    )
                   }
                 />
 
@@ -875,7 +911,9 @@ export default function Admin() {
                   className="form-control"
                   value={discount}
                   onChange={(e) =>
-                    setDiscount(e.target.value)
+                    setDiscount(
+                      e.target.value
+                    )
                   }
                 />
 
@@ -909,7 +947,9 @@ export default function Admin() {
                   className="form-control"
                   value={videoUrl}
                   onChange={(e) =>
-                    setVideoUrl(e.target.value)
+                    setVideoUrl(
+                      e.target.value
+                    )
                   }
                 />
 
@@ -945,11 +985,14 @@ export default function Admin() {
                   className="form-control"
                   value={notesUrl}
                   onChange={(e) =>
-                    setNotesUrl(e.target.value)
+                    setNotesUrl(
+                      e.target.value
+                    )
                   }
                 />
 
               </div>
+
               <div className="col-md-6 mb-3">
 
                 <label className="form-label">
@@ -962,7 +1005,9 @@ export default function Admin() {
                   placeholder="One point per line"
                   value={whatYouLearn}
                   onChange={(e) =>
-                    setWhatYouLearn(e.target.value)
+                    setWhatYouLearn(
+                      e.target.value
+                    )
                   }
                 />
 
@@ -980,7 +1025,9 @@ export default function Admin() {
                   placeholder="One topic per line"
                   value={courseContent}
                   onChange={(e) =>
-                    setCourseContent(e.target.value)
+                    setCourseContent(
+                      e.target.value
+                    )
                   }
                 />
 
@@ -996,9 +1043,12 @@ export default function Admin() {
                   className="form-select"
                   value={certificate}
                   onChange={(e) =>
-                    setCertificate(e.target.value)
+                    setCertificate(
+                      e.target.value
+                    )
                   }
                 >
+
                   <option value="Yes">
                     Yes
                   </option>
@@ -1073,7 +1123,6 @@ export default function Admin() {
               </button>
 
               {editingId && (
-
                 <button
                   type="button"
                   className="btn btn-secondary btn-lg"
@@ -1081,7 +1130,6 @@ export default function Admin() {
                 >
                   Cancel
                 </button>
-
               )}
 
             </div>
@@ -1092,9 +1140,6 @@ export default function Admin() {
 
       </div>
 
-      {/* ==========================
-          PART 4 STARTS HERE
-          ========================== */}
       {/* ========================== */}
       {/* MANAGE COURSES */}
       {/* ========================== */}
@@ -1160,154 +1205,152 @@ export default function Admin() {
 
                 ) : (
 
-                  filteredCourses.map((course) => (
+                  filteredCourses.map(
+                    (course) => (
 
-                    <tr key={course._id}>
+                      <tr key={course._id}>
 
-                      <td>
+                        <td>
 
-                        <img
-                          src={course.image}
-                          alt={course.title}
-                          style={{
-                            width: "90px",
-                            height: "60px",
-                            objectFit: "cover",
-                            borderRadius: "10px",
-                          }}
-                        />
+                          <img
+                            src={course.image}
+                            alt={course.title}
+                            style={{
+                              width: "90px",
+                              height: "60px",
+                              objectFit: "cover",
+                              borderRadius:
+                                "10px",
+                            }}
+                          />
 
-                      </td>
+                        </td>
 
-                      <td>
+                        <td>
 
-                        <h6 className="fw-bold mb-1">
-                          {course.title}
-                        </h6>
+                          <h6 className="fw-bold mb-1">
+                            {course.title}
+                          </h6>
 
-                        <small className="text-muted">
-                          {course.duration}
-                        </small>
+                          <small className="text-muted">
+                            {course.duration}
+                          </small>
 
-                      </td>
+                        </td>
 
-                      <td>
+                        <td>
+                          {course.instructor}
+                        </td>
 
-                        {course.instructor}
+                        <td>
 
-                      </td>
+                          <span className="badge bg-info">
+                            {course.category}
+                          </span>
 
-                      <td>
+                        </td>
 
-                        <span className="badge bg-info">
+                        <td>
+                          ₹{course.price}
+                        </td>
 
-                          {course.category}
+                        <td>
+                          {course.students || 0}
+                        </td>
 
-                        </span>
+                        <td>
+                          ⭐ {course.rating || 0}
+                        </td>
 
-                      </td>
+                        <td>
 
-                      <td>
+                          <div className="d-flex flex-wrap gap-2">
 
-                        ₹{course.price}
+                            <button
+                              className="btn btn-sm btn-primary"
+                              onClick={() =>
+                                editCourse(
+                                  course
+                                )
+                              }
+                            >
+                              ✏ Edit
+                            </button>
 
-                      </td>
+                            <button
+                              className="btn btn-sm btn-danger"
+                              onClick={() =>
+                                deleteCourse(
+                                  course._id
+                                )
+                              }
+                            >
+                              🗑 Delete
+                            </button>
 
-                      <td>
+                            <button
+                              className="btn btn-sm btn-warning"
+                              onClick={() =>
+                                navigate(
+                                  `/admin/quiz/${course._id}`
+                                )
+                              }
+                            >
+                              📝 Add Quiz
+                            </button>
 
-                        {course.students || 0}
+                            <button
+                              className="btn btn-sm btn-success"
+                              onClick={() =>
+                                navigate(
+                                  `/admin/students/${course._id}`
+                                )
+                              }
+                            >
+                              👨‍🎓 Students
+                            </button>
 
-                      </td>
+                            <button
+                              className="btn btn-sm btn-info text-white"
+                              onClick={() =>
+                                navigate(
+                                  `/admin/progress/${course._id}`
+                                )
+                              }
+                            >
+                              📊 Progress
+                            </button>
 
-                      <td>
+                            <button
+                              className="btn btn-sm btn-secondary"
+                              onClick={() =>
+                                navigate(
+                                  `/admin/certificates/${course._id}`
+                                )
+                              }
+                            >
+                              🎓 Certificates
+                            </button>
 
-                        ⭐ {course.rating || 0}
+                            <button
+                              className="btn btn-sm btn-dark"
+                              onClick={() =>
+                                navigate(
+                                  `/admin/quiz-ai/${course._id}`
+                                )
+                              }
+                            >
+                              🤖 AI Quiz
+                            </button>
 
-                      </td>
+                          </div>
 
-                      <td>
+                        </td>
 
-                        <div className="d-flex flex-wrap gap-2">
+                      </tr>
 
-                          <button
-                            className="btn btn-sm btn-primary"
-                            onClick={() =>
-                              editCourse(course)
-                            }
-                          >
-                            ✏ Edit
-                          </button>
-
-                          <button
-                            className="btn btn-sm btn-danger"
-                            onClick={() =>
-                              deleteCourse(course._id)
-                            }
-                          >
-                            🗑 Delete
-                          </button>
-
-                          <button
-                            className="btn btn-sm btn-warning"
-                            onClick={() =>
-                              navigate(
-                                `/admin/quiz/${course._id}`
-                              )
-                            }
-                          >
-                            📝 Add Quiz
-                          </button>
-                          <button
-                            className="btn btn-sm btn-success"
-                            onClick={() =>
-                              navigate(
-                                `/admin/students/${course._id}`
-                              )
-                            }
-                          >
-                            👨‍🎓 Students
-                          </button>
-
-                          <button
-                            className="btn btn-sm btn-info text-white"
-                            onClick={() =>
-                              navigate(
-                                `/admin/progress/${course._id}`
-                              )
-                            }
-                          >
-                            📊 Progress
-                          </button>
-
-                          <button
-                            className="btn btn-sm btn-secondary"
-                            onClick={() =>
-                              navigate(
-                                `/admin/certificates/${course._id}`
-                              )
-                            }
-                          >
-                            🎓 Certificates
-                          </button>
-
-                          <button
-                            className="btn btn-sm btn-dark"
-                            onClick={() =>
-                              navigate(
-                                `/admin/quiz-ai/${course._id}`
-                              )
-                            }
-                          >
-                            🤖 AI Quiz
-                          </button>
-
-                        </div>
-
-                      </td>
-
-                    </tr>
-
-                  ))
+                    )
+                  )
 
                 )}
 
@@ -1321,9 +1364,6 @@ export default function Admin() {
 
       </div>
 
-      {/* ==========================
-          PART 4C STARTS HERE
-      ========================== */}
       {/* ========================== */}
       {/* REPORT CENTER */}
       {/* ========================== */}
@@ -1344,78 +1384,98 @@ export default function Admin() {
 
             <div className="col-md-3">
 
-             <button
-  className="btn btn-outline-success w-100"
-  onClick={() =>
-    window.open(
-      `${API}/reports/excel`,
-      "_blank"
-    )
-  }
->
-  📊 Export Excel
-</button>
-            </div>
+              <button
+                className="btn btn-outline-success w-100"
+                onClick={() =>
+                  window.open(
+                    `${API}/reports/excel`,
+                    "_blank"
+                  )
+                }
+              >
+                📊 Export Excel
+              </button>
 
-            <div className="col-md-3">
-
-             <button
-  className="btn btn-outline-danger w-100"
-  onClick={() =>
-    window.open(
-      `${API}/reports/pdf`,
-      "_blank"
-    )
-  }
->
-  📕 Export PDF
-</button>
             </div>
 
             <div className="col-md-3">
 
               <button
-  className="btn btn-outline-primary w-100"
-  onClick={async () => {
-    try {
-      const res = await axios.get(
-        `${API}/reports/analytics`
-      );
+                className="btn btn-outline-danger w-100"
+                onClick={() =>
+                  window.open(
+                    `${API}/reports/pdf`,
+                    "_blank"
+                  )
+                }
+              >
+                📕 Export PDF
+              </button>
 
-      alert(
-        `Revenue : ₹${res.data.analytics.totalRevenue}`
-      );
-
-    } catch (err) {
-      alert("Unable to load analytics");
-    }
-  }}
->
-  💰 Revenue Report
-</button>
             </div>
 
             <div className="col-md-3">
-<button
-  className="btn btn-outline-dark w-100"
-  onClick={async () => {
-    try {
-      const res = await axios.get(
-        `${API}/reports/courses`
-      );
 
-      alert(
-        `Total Courses : ${res.data.totalCourses}`
-      );
+              <button
+                className="btn btn-outline-primary w-100"
+                onClick={async () => {
 
-    } catch (err) {
-      alert("Unable to load report");
-    }
-  }}
->
-  📈 Activity Logs
-</button>
-             
+                  try {
+
+                    const res =
+                      await axios.get(
+                        `${API}/reports/analytics`
+                      );
+
+                    alert(
+                      `Revenue : ₹${res.data.analytics.totalRevenue}`
+                    );
+
+                  } catch (err) {
+
+                    alert(
+                      "Unable to load analytics"
+                    );
+
+                  }
+
+                }}
+              >
+                💰 Revenue Report
+              </button>
+
+            </div>
+
+            <div className="col-md-3">
+
+              <button
+                className="btn btn-outline-dark w-100"
+                onClick={async () => {
+
+                  try {
+
+                    const res =
+                      await axios.get(
+                        `${API}/reports/courses`
+                      );
+
+                    alert(
+                      `Total Courses : ${res.data.totalCourses}`
+                    );
+
+                  } catch (err) {
+
+                    alert(
+                      "Unable to load report"
+                    );
+
+                  }
+
+                }}
+              >
+                📈 Activity Logs
+              </button>
+
             </div>
 
           </div>
@@ -1488,19 +1548,31 @@ export default function Admin() {
 
           <div className="alert alert-info">
 
-            <strong>Coming Soon 🚀</strong>
+            <strong>
+              Coming Soon 🚀
+            </strong>
 
             <ul className="mt-3 mb-0">
 
-              <li>📊 Revenue Charts</li>
+              <li>
+                📊 Revenue Charts
+              </li>
 
-              <li>📈 Monthly Enrollments Graph</li>
+              <li>
+                📈 Monthly Enrollments Graph
+              </li>
 
-              <li>👨‍🎓 Active Students</li>
+              <li>
+                👨‍🎓 Active Students
+              </li>
 
-              <li>🏆 Top Selling Courses</li>
+              <li>
+                🏆 Top Selling Courses
+              </li>
 
-              <li>🤖 AI Insights</li>
+              <li>
+                🤖 AI Insights
+              </li>
 
             </ul>
 
@@ -1510,8 +1582,147 @@ export default function Admin() {
 
       </div>
 
+      {/* ========================== */}
+      {/* NEWSLETTER SUBSCRIBERS */}
+      {/* ========================== */}
+
+      <div className="card shadow-lg border-0 mt-5 mb-5">
+
+        <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+
+          <h4 className="mb-0">
+            📩 Newsletter Subscribers
+          </h4>
+
+          <button
+            className="btn btn-light btn-sm fw-bold"
+            onClick={
+              loadNewsletterSubscribers
+            }
+            disabled={newsletterLoading}
+          >
+            {newsletterLoading
+              ? "Loading..."
+              : "🔄 Refresh"}
+          </button>
+
+        </div>
+
+        <div className="card-body">
+
+          <div className="d-flex justify-content-between align-items-center mb-3">
+
+            <h5 className="mb-0">
+
+              Total Subscribers:
+
+              <span className="text-primary ms-2">
+                {newsletterSubscribers.length}
+              </span>
+
+            </h5>
+
+          </div>
+
+          {newsletterLoading ? (
+
+            <div className="text-center py-4">
+
+              <div className="spinner-border text-primary" />
+
+              <p className="mt-2 text-muted">
+                Loading subscribers...
+              </p>
+
+            </div>
+
+          ) : newsletterSubscribers.length === 0 ? (
+
+            <div className="alert alert-info text-center">
+
+              📭 No newsletter subscribers found.
+
+            </div>
+
+          ) : (
+
+            <div className="table-responsive">
+
+              <table className="table table-hover align-middle">
+
+                <thead className="table-primary">
+
+                  <tr>
+
+                    <th>#</th>
+
+                    <th>📧 Email</th>
+
+                    <th>📅 Subscribed Date</th>
+
+                  </tr>
+
+                </thead>
+
+                <tbody>
+
+                  {newsletterSubscribers.map(
+                    (subscriber, index) => (
+
+                      <tr
+                        key={
+                          subscriber._id ||
+                          index
+                        }
+                      >
+
+                        <td>
+
+                          <strong>
+                            {index + 1}
+                          </strong>
+
+                        </td>
+
+                        <td>
+
+                          <span className="fw-bold">
+
+                            {subscriber.email}
+
+                          </span>
+
+                        </td>
+
+                        <td>
+
+                          {subscriber.createdAt
+                            ? new Date(
+                                subscriber.createdAt
+                              ).toLocaleDateString(
+                                "en-IN"
+                              )
+                            : "N/A"}
+
+                        </td>
+
+                      </tr>
+
+                    )
+                  )}
+
+                </tbody>
+
+              </table>
+
+            </div>
+
+          )}
+
+        </div>
+
+      </div>
+
     </div>
-
   );
-
 }

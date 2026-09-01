@@ -4,9 +4,6 @@ require("dotenv").config();
 
 const connectDB = require("./config/db");
 
-// ===============================
-// Routes
-// ===============================
 const authRoutes = require("./routes/authRoutes");
 const courseRoutes = require("./routes/courseRoutes");
 const aiRoutes = require("./routes/aiRoutes");
@@ -21,12 +18,7 @@ const newsletterRoutes = require("./routes/newsletterRoutes");
 const app = express();
 
 // ===============================
-// Database Connection
-// ===============================
-connectDB();
-
-// ===============================
-// CORS Configuration
+// CORS
 // ===============================
 
 const allowedOrigins = [
@@ -38,21 +30,16 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Allow requests with no Origin
-      // Example: Postman / server-to-server
       if (!origin) {
         return callback(null, true);
       }
 
-      // Allow known frontend origins
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
 
-      console.log("CORS blocked:", origin);
-
-      // Reject unknown origins
-      return callback(new Error("Not allowed by CORS"));
+      console.log("Blocked CORS Origin:", origin);
+      return callback(null, false);
     },
 
     methods: [
@@ -70,27 +57,22 @@ app.use(
     ],
 
     credentials: true,
-
-    optionsSuccessStatus: 204,
   })
 );
 
 // ===============================
-// Explicit Preflight
-// ===============================
-
-
-// ===============================
-// JSON Middleware
+// Body Parser
 // ===============================
 
 app.use(express.json());
 
 // ===============================
-// Test Route
+// TEST ROUTE
 // ===============================
 
 app.get("/test", (req, res) => {
+  console.log("TEST ROUTE HIT");
+
   res.status(200).json({
     success: true,
     message: "Server Working",
@@ -98,7 +80,7 @@ app.get("/test", (req, res) => {
 });
 
 // ===============================
-// API Routes
+// API ROUTES
 // ===============================
 
 app.use("/api/auth", authRoutes);
@@ -122,36 +104,20 @@ app.use("/api/quiz", quizRoutes);
 app.use("/api/newsletter", newsletterRoutes);
 
 // ===============================
-// 404 Handler
+// DATABASE
 // ===============================
 
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: "API endpoint not found",
-    path: req.originalUrl,
-  });
-});
+connectDB();
 
 // ===============================
-// Error Handler
-// ===============================
-
-app.use((err, req, res, next) => {
-  console.error("Server Error:", err.message);
-
-  res.status(500).json({
-    success: false,
-    message: err.message || "Internal Server Error",
-  });
-});
-
-// ===============================
-// Server
+// SERVER
 // ===============================
 
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
+  console.log("=================================");
   console.log(`Server running on port ${PORT}`);
+  console.log(`Test URL: http://localhost:${PORT}/test`);
+  console.log("=================================");
 });

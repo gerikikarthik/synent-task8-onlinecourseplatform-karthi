@@ -28,13 +28,14 @@ export default function Login() {
     try {
       setLoading(true);
 
-      const res = await axios.post(
-        "https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/auth/login",
-        {
-          email: email.trim(),
-          password,
-        }
-      );
+    const res = await axios.post(
+  
+  "https://synent-task8-onlinecourseplatform-karthi.onrender.com/api/auth/login",
+  {
+    email: email.trim(),
+    password,
+  }
+);
 
       localStorage.setItem("token", res.data.token);
       localStorage.setItem(

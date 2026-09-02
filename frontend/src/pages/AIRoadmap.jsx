@@ -1,660 +1,331 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import axios from "axios";
 
-import {
-  generateRoadmap,
-  generateCodingQuestions,
-} from "../services/aiService";
-
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:5000";
 
 function AIRoadmap() {
   const navigate = useNavigate();
-  const location = useLocation();
+  const [searchParams] = useSearchParams();
 
-  const [career, setCareer] = useState(
-    location.state?.career || ""
-  );
+  const courseId = searchParams.get("courseId");
 
-  const [experience, setExperience] = useState(
-    location.state?.experience || "Beginner"
-  );
+  const [course, setCourse] = useState(null);
 
-  const [dailyTime, setDailyTime] = useState(
-    location.state?.dailyTime || "2 Hours"
-  );
+  const [career, setCareer] = useState("");
+  const [experience, setExperience] = useState("Beginner");
+  const [dailyTime, setDailyTime] = useState("2 hours");
 
   const [roadmap, setRoadmap] = useState(null);
 
-  const [loading, setLoading] = useState(false);
+  const [loadingCourse, setLoadingCourse] = useState(true);
+  const [generating, setGenerating] = useState(false);
 
-  const [selectedTopic, setSelectedTopic] = useState(null);
-
-  // =====================================================
-  // CODING STATES
-  // =====================================================
-
-  const [codingQuestions, setCodingQuestions] = useState([]);
-
-  const [codingLoading, setCodingLoading] = useState(false);
+  const [error, setError] = useState("");
 
   // =====================================================
-  // COMPLETED TOPICS
+  // GET COURSE
   // =====================================================
 
-  const [completedTopics, setCompletedTopics] =
-    useState(() => {
+  useEffect(() => {
+    const fetchCourse = async () => {
+      if (!courseId) {
+        setError("Course ID is missing.");
+        setLoadingCourse(false);
+        return;
+      }
+
       try {
-        const saved = localStorage.getItem(
-          "aiRoadmapCompletedTopics"
+        const response = await axios.get(
+          `${API_URL}/api/courses/${courseId}`
         );
 
-        return saved ? JSON.parse(saved) : [];
-      } catch {
-        return [];
+        const data = response.data;
+
+        const selectedCourse =
+          data.course ||
+          data.data ||
+          data;
+
+        setCourse(selectedCourse);
+
+      } catch (err) {
+        console.error("Course Fetch Error:", err);
+
+        setError(
+          err.response?.data?.message ||
+            "Unable to load course details."
+        );
+      } finally {
+        setLoadingCourse(false);
       }
-    });
+    };
+
+    fetchCourse();
+  }, [courseId]);
 
   // =====================================================
-  // QUIZ STATES
+  // GENERATE ROADMAP
   // =====================================================
 
-  const [quizTopic, setQuizTopic] = useState(null);
-
-  const [quizAnswers, setQuizAnswers] = useState({});
-
-  const [quizSubmitted, setQuizSubmitted] =
-    useState(false);
-
-  const [quizScore, setQuizScore] = useState(0);
-
-  // =====================================================
-  // GENERATE AI ROADMAP
-  // =====================================================
-
-  const handleGenerate = async () => {
+  const generateRoadmap = async () => {
     if (!career.trim()) {
-      alert("Please select a career first.");
+      setError("Please enter your career goal.");
+      return;
+    }
+
+    if (!course) {
+      setError("Course information is not available.");
       return;
     }
 
     try {
-      setLoading(true);
-
-      const res = await generateRoadmap({
-        career,
-        experience,
-        dailyTime,
-      });
-
-      setRoadmap(res.roadmap);
-
-      setSelectedTopic(null);
-
-      setCodingQuestions([]);
-
-      setQuizTopic(null);
-
-      setQuizAnswers({});
-
-      setQuizSubmitted(false);
-
-      setQuizScore(0);
-    } catch (err) {
-      console.log(err);
-      console.log(err.response);
-
-      alert(
-        JSON.stringify(
-          err.response?.data || err.message
-        )
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // =====================================================
-  // DOWNLOAD PDF
-  // =====================================================
-
-  const downloadRoadmap = () => {
-    const input =
-      document.getElementById("roadmap");
-
-    if (!input) {
-      return;
-    }
-
-    html2canvas(input, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: "#ffffff",
-    }).then((canvas) => {
-      const imgData =
-        canvas.toDataURL("image/png");
-
-      const pdf = new jsPDF(
-        "p",
-        "mm",
-        "a4"
-      );
-
-      const pageWidth = 210;
-      const pageHeight = 297;
-
-      const imgWidth = pageWidth;
-
-      const imgHeight =
-        (canvas.height * imgWidth) /
-        canvas.width;
-
-      let heightLeft = imgHeight;
-
-      let position = 0;
-
-      pdf.addImage(
-        imgData,
-        "PNG",
-        0,
-        position,
-        imgWidth,
-        imgHeight
-      );
-
-      heightLeft -= pageHeight;
-
-      while (heightLeft > 0) {
-        position =
-          heightLeft - imgHeight;
-
-        pdf.addPage();
-
-        pdf.addImage(
-          imgData,
-          "PNG",
-          0,
-          position,
-          imgWidth,
-          imgHeight
-        );
-
-        heightLeft -= pageHeight;
-      }
-
-      pdf.save(
-        "AI-Career-Roadmap.pdf"
-      );
-    });
-  };
-
-  // =====================================================
-  // AUTO GENERATE
-  // =====================================================
-
-  useEffect(() => {
-    if (location.state?.career) {
-      handleGenerate();
-    }
-  }, []);
-
-  // =====================================================
-  // SAVE COMPLETED TOPICS
-  // =====================================================
-
-  useEffect(() => {
-    localStorage.setItem(
-      "aiRoadmapCompletedTopics",
-      JSON.stringify(completedTopics)
-    );
-  }, [completedTopics]);
-
-  // =====================================================
-  // TOPIC KEY
-  // =====================================================
-
-  const getTopicKey = (topic) => {
-    return `${career}-${topic}`
-      .toLowerCase()
-      .replace(/\s+/g, "-");
-  };
-
-  // =====================================================
-  // MARK TOPIC COMPLETE
-  // =====================================================
-
-  const markTopicComplete = (topic) => {
-    const key = getTopicKey(topic);
-
-    if (!completedTopics.includes(key)) {
-      setCompletedTopics([
-        ...completedTopics,
-        key,
-      ]);
-    }
-  };
-
-  // =====================================================
-  // CHECK TOPIC COMPLETE
-  // =====================================================
-
-  const isTopicCompleted = (topic) => {
-    return completedTopics.includes(
-      getTopicKey(topic)
-    );
-  };
-
-  // =====================================================
-  // YOUTUBE SEARCH
-  // =====================================================
-
-  const openVideo = (topic) => {
-    const searchQuery =
-      encodeURIComponent(
-        `${topic} tutorial for beginners`
-      );
-
-    window.open(
-      `https://www.youtube.com/results?search_query=${searchQuery}`,
-      "_blank"
-    );
-
-    markTopicComplete(topic);
-  };
-
-  // =====================================================
-  // INTERVIEW QUESTIONS
-  // =====================================================
-
-  const getInterviewQuestions = (
-    topic
-  ) => {
-    return [
-      `What is ${topic} and why is it important?`,
-      `Explain the main concepts of ${topic}.`,
-      `What are the advantages of using ${topic}?`,
-      `What are the common challenges when working with ${topic}?`,
-      `Give a real-world example of ${topic}.`,
-    ];
-  };
-
-  // =====================================================
-  // GENERATE CODING QUESTIONS
-  // =====================================================
-
-  const loadCodingQuestions = async (
-    topic
-  ) => {
-    if (!topic) {
-      return;
-    }
-
-    try {
-      setCodingLoading(true);
-
-      setCodingQuestions([]);
-
-      const res =
-        await generateCodingQuestions(
-          topic,
-          career
-        );
-
-      console.log(
-        "CODING QUESTIONS RESPONSE:",
-        res
-      );
-
-      const questions =
-        res.data?.questions || [];
-
-      setCodingQuestions(questions);
-    } catch (error) {
-      console.error(
-        "Coding Questions Error:",
-        error
-      );
-
-      alert(
-        error.response?.data?.message ||
-          "Failed to generate coding questions"
-      );
-    } finally {
-      setCodingLoading(false);
-    }
-  };
-
-  // =====================================================
-  // OPEN CODING PRACTICE PAGE
-  // =====================================================
-
-  const openCodingPractice = (
-    question
-  ) => {
-    navigate("/coding-practice", {
-      state: {
-        question,
-        topic: selectedTopic,
-        career,
-      },
-    });
-  };
-
-  // =====================================================
-  // QUIZ QUESTIONS
-  // =====================================================
-
-  const getQuizQuestions = (
-    topic
-  ) => {
-    return [
-      {
-        question: `What is the primary purpose of ${topic}?`,
-        options: [
-          "To solve programming and development problems",
-          "Only for designing images",
-          "Only for playing games",
-          "None of the above",
-        ],
-        answer: 0,
-      },
-
-      {
-        question: `Which approach is best when learning ${topic}?`,
-        options: [
-          "Only watching videos",
-          "Learn concepts and practice",
-          "Avoid practice",
-          "Memorize everything",
-        ],
-        answer: 1,
-      },
-
-      {
-        question: `Which is important for becoming good at ${topic}?`,
-        options: [
-          "Practice",
-          "Avoid coding",
-          "Skip fundamentals",
-          "None",
-        ],
-        answer: 0,
-      },
-
-      {
-        question: `How should you prepare ${topic} for interviews?`,
-        options: [
-          "Only read definitions",
-          "Practice concepts and problems",
-          "Never practice",
-          "Skip examples",
-        ],
-        answer: 1,
-      },
-
-      {
-        question: `What helps most with ${topic}?`,
-        options: [
-          "Consistent practice",
-          "Avoiding projects",
-          "Skipping questions",
-          "None",
-        ],
-        answer: 0,
-      },
-    ];
-  };
-
-  // =====================================================
-  // START QUIZ
-  // =====================================================
-
-  const startQuiz = (topic) => {
-    setQuizTopic(topic);
-
-    setQuizAnswers({});
-
-    setQuizSubmitted(false);
-
-    setQuizScore(0);
-  };
-
-  // =====================================================
-  // SELECT ANSWER
-  // =====================================================
-
-  const selectAnswer = (
-    questionIndex,
-    answerIndex
-  ) => {
-    if (quizSubmitted) {
-      return;
-    }
-
-    setQuizAnswers({
-      ...quizAnswers,
-      [questionIndex]:
-        answerIndex,
-    });
-  };
-
-  // =====================================================
-  // SUBMIT QUIZ
-  // =====================================================
-
-  const submitQuiz = () => {
-    if (!quizTopic) {
-      return;
-    }
-
-    const questions =
-      getQuizQuestions(quizTopic);
-
-    let score = 0;
-
-    questions.forEach(
-      (question, index) => {
-        if (
-          quizAnswers[index] ===
-          question.answer
-        ) {
-          score++;
-        }
-      }
-    );
-
-    setQuizScore(score);
-
-    setQuizSubmitted(true);
-
-    if (score >= 3) {
-      markTopicComplete(quizTopic);
-    }
-  };
-
-  // =====================================================
-  // CALCULATE TOTAL TOPICS
-  // =====================================================
-
-  const getTotalTopics = () => {
-    if (!roadmap?.modules) {
-      return 0;
-    }
-
-    return roadmap.modules.reduce(
-      (total, module) => {
-        return (
-          total +
-          (module.topics?.length || 0)
-        );
-      },
-      0
-    );
-  };
-
-  // =====================================================
-  // CALCULATE COMPLETED TOPICS
-  // =====================================================
-
-  const getCompletedTopicCount = () => {
-    if (!roadmap?.modules) {
-      return 0;
-    }
-
-    let count = 0;
-
-    roadmap.modules.forEach(
-      (module) => {
-        module.topics?.forEach(
-          (topic) => {
-            if (
-              isTopicCompleted(topic)
-            ) {
-              count++;
+      setGenerating(true);
+      setError("");
+      setRoadmap(null);
+
+      const courseTopics =
+        course.topics ||
+        course.lessons ||
+        course.modules ||
+        [];
+
+      const topicNames = Array.isArray(courseTopics)
+        ? courseTopics.map((item) => {
+            if (typeof item === "string") {
+              return item;
             }
-          }
+
+            return (
+              item.title ||
+              item.name ||
+              item.topic ||
+              ""
+            );
+          }).filter(Boolean)
+        : [];
+
+      const response = await axios.post(
+        `${API_URL}/api/ai/roadmap`,
+        {
+          career: career.trim(),
+          experience,
+          dailyTime,
+
+          courseTitle:
+            course.title ||
+            course.name ||
+            "Selected Course",
+
+          courseDescription:
+            course.description ||
+            "",
+
+          courseTopics: topicNames,
+        }
+      );
+
+      if (response.data?.success) {
+        setRoadmap(response.data.roadmap);
+      } else {
+        setError(
+          response.data?.message ||
+            "Failed to generate roadmap."
         );
       }
-    );
 
-    return count;
+    } catch (err) {
+      console.error(
+        "Roadmap Generation Error:",
+        err
+      );
+
+      setError(
+        err.response?.data?.message ||
+          "Unable to generate AI roadmap."
+      );
+    } finally {
+      setGenerating(false);
+    }
   };
 
-  const totalTopics =
-    getTotalTopics();
+  // =====================================================
+  // TOPIC COMPLETE
+  // =====================================================
 
-  const completedTopicCount =
-    getCompletedTopicCount();
-
-  const overallProgress =
-    totalTopics > 0
-      ? Math.round(
-          (completedTopicCount /
-            totalTopics) *
-            100
-        )
-      : 0;
+  const handleTopicStart = (moduleIndex, topicIndex) => {
+    console.log(
+      "Starting topic:",
+      moduleIndex,
+      topicIndex
+    );
+  };
 
   // =====================================================
-  // RENDER
+  // LOADING
+  // =====================================================
+
+  if (loadingCourse) {
+    return (
+      <div className="container py-5 text-center">
+        <div
+          className="spinner-border"
+          role="status"
+        />
+
+        <h5 className="mt-3">
+          Loading course...
+        </h5>
+      </div>
+    );
+  }
+
+  // =====================================================
+  // ERROR
+  // =====================================================
+
+  if (error && !course) {
+    return (
+      <div className="container py-5">
+        <div className="alert alert-danger">
+          {error}
+        </div>
+
+        <button
+          className="btn btn-primary"
+          onClick={() => navigate("/courses")}
+        >
+          Back to Courses
+        </button>
+      </div>
+    );
+  }
+
+  // =====================================================
+  // UI
   // =====================================================
 
   return (
-    <div
-      className="container-fluid py-5"
-      style={{
-        background:
-          "linear-gradient(135deg,#f4f7ff,#ffffff)",
-        minHeight: "100vh",
-      }}
-    >
-      <div className="container">
+    <div className="container py-5">
 
-        {/* =================================================
-            HEADER
-        ================================================= */}
+      {/* ================================================= */}
+      {/* HEADER */}
+      {/* ================================================= */}
 
-        <div className="text-center mb-5">
+      <div className="text-center mb-5">
 
-          <div
-            style={{
-              fontSize: "55px",
-            }}
-          >
-            🤖
+        <span className="badge bg-primary mb-3">
+          AI CAREER ROADMAP
+        </span>
+
+        <h1 className="fw-bold">
+          Build Your Personalized Learning Path
+        </h1>
+
+        <p className="text-muted">
+          Your roadmap is generated using the selected
+          course and your career goal.
+        </p>
+
+      </div>
+
+      {/* ================================================= */}
+      {/* COURSE CARD */}
+      {/* ================================================= */}
+
+      {course && (
+        <div className="card shadow-sm border-0 mb-4">
+
+          <div className="card-body p-4">
+
+            <h3 className="fw-bold">
+              {course.title ||
+                course.name ||
+                "Selected Course"}
+            </h3>
+
+            <p className="text-muted mb-0">
+              {course.description ||
+                "Personalized roadmap for this course."}
+            </p>
+
           </div>
 
-          <h1
-            className="fw-bold"
-            style={{
-              color: "#0d6efd",
-            }}
-          >
-            AI Career Roadmap
-          </h1>
-
-          <p className="text-muted">
-            Your personalized AI-powered
-            learning journey
-          </p>
-
         </div>
+      )}
 
-        {/* =================================================
-            GENERATOR
-        ================================================= */}
+      {/* ================================================= */}
+      {/* ROADMAP INPUT */}
+      {/* ================================================= */}
 
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleGenerate();
-          }}
-          className="card border-0 shadow-lg p-4 mb-5"
-          style={{
-            borderRadius: "20px",
-          }}
-        >
+      {!roadmap && (
+        <div className="card shadow border-0">
 
-          <div className="row">
+          <div className="card-body p-4 p-md-5">
 
-            {/* CAREER */}
+            <h3 className="fw-bold mb-4">
+              Tell us about your goal
+            </h3>
 
-            <div className="col-md-4 mb-3">
+            {/* Career */}
 
-              <label className="form-label fw-bold">
-                Career
+            <div className="mb-4">
+
+              <label className="form-label fw-semibold">
+                Career Goal
               </label>
 
               <input
                 type="text"
                 className="form-control form-control-lg"
+                placeholder="Example: Full Stack Developer"
                 value={career}
-                readOnly
-                placeholder="Select career"
+                onChange={(e) =>
+                  setCareer(e.target.value)
+                }
               />
 
             </div>
 
-            {/* EXPERIENCE */}
+            {/* Experience */}
 
-            <div className="col-md-4 mb-3">
+            <div className="mb-4">
 
-              <label className="form-label fw-bold">
-                Experience
+              <label className="form-label fw-semibold">
+                Experience Level
               </label>
 
               <select
                 className="form-select form-select-lg"
                 value={experience}
                 onChange={(e) =>
-                  setExperience(
-                    e.target.value
-                  )
+                  setExperience(e.target.value)
                 }
               >
 
                 <option value="Beginner">
-                  🟢 Beginner
+                  Beginner
                 </option>
 
                 <option value="Intermediate">
-                  🟡 Intermediate
+                  Intermediate
                 </option>
 
                 <option value="Advanced">
-                  🔴 Advanced
+                  Advanced
                 </option>
 
               </select>
 
             </div>
 
-            {/* DAILY TIME */}
+            {/* Daily Time */}
 
-            <div className="col-md-4 mb-3">
+            <div className="mb-4">
 
-              <label className="form-label fw-bold">
+              <label className="form-label fw-semibold">
                 Daily Study Time
               </label>
 
@@ -662,541 +333,291 @@ function AIRoadmap() {
                 className="form-select form-select-lg"
                 value={dailyTime}
                 onChange={(e) =>
-                  setDailyTime(
-                    e.target.value
-                  )
+                  setDailyTime(e.target.value)
                 }
               >
 
-                <option value="1 Hour">
-                  1 Hour / Day
+                <option value="1 hour">
+                  1 Hour
                 </option>
 
-                <option value="2 Hours">
-                  2 Hours / Day
+                <option value="2 hours">
+                  2 Hours
                 </option>
 
-                <option value="3 Hours">
-                  3 Hours / Day
+                <option value="3 hours">
+                  3 Hours
                 </option>
 
-                <option value="4 Hours">
-                  4 Hours / Day
+                <option value="4 hours">
+                  4 Hours
                 </option>
 
-                <option value="5 Hours">
-                  5 Hours / Day
-                </option>
-
-                <option value="6 Hours">
-                  6 Hours / Day
+                <option value="5+ hours">
+                  5+ Hours
                 </option>
 
               </select>
 
             </div>
 
-          </div>
+            {/* Error */}
 
-          <button
-            type="submit"
-            className="btn btn-primary btn-lg w-100"
-            disabled={loading}
-          >
-            {loading
-              ? "🤖 Generating AI Roadmap..."
-              : "🚀 Generate AI Roadmap"}
-          </button>
+            {error && (
+              <div className="alert alert-danger">
+                {error}
+              </div>
+            )}
 
-        </form>
+            {/* Generate */}
 
-        {/* =================================================
-            LOADING
-        ================================================= */}
-
-        {loading && (
-          <div className="text-center my-5">
-
-            <div
-              className="spinner-border text-primary"
-              style={{
-                width: "3rem",
-                height: "3rem",
-              }}
-            ></div>
-
-            <h5 className="mt-3">
-              AI is building your
-              personalized roadmap...
-            </h5>
-
-          </div>
-        )}
-
-        {/* =================================================
-            ROADMAP
-        ================================================= */}
-
-        {roadmap && !loading && (
-
-          <div id="roadmap">
-
-            {/* =================================================
-                ROADMAP HEADER
-            ================================================= */}
-
-            <div
-              className="card border-0 shadow-lg mb-4"
-              style={{
-                borderRadius: "20px",
-              }}
+            <button
+              className="btn btn-primary btn-lg w-100"
+              onClick={generateRoadmap}
+              disabled={generating}
             >
 
-              <div className="card-body text-center p-5">
+              {generating ? (
+                <>
+                  <span
+                    className="spinner-border spinner-border-sm me-2"
+                  />
 
-                <span className="badge bg-primary fs-6 px-3 py-2">
-                  🤖 AI GENERATED
-                </span>
+                  Generating your roadmap...
+                </>
+              ) : (
+                <>
+                  ✨ Generate AI Roadmap
+                </>
+              )}
 
-                <h2 className="text-primary fw-bold mt-3">
-                  {roadmap.title}
-                </h2>
+            </button>
 
-                <h5 className="text-muted">
-                  📅 Duration:{" "}
-                  {roadmap.duration}
-                </h5>
+          </div>
 
-                {/* PROGRESS */}
+        </div>
+      )}
 
-                <div className="mt-4 text-start">
+      {/* ================================================= */}
+      {/* GENERATED ROADMAP */}
+      {/* ================================================= */}
 
-                  <div className="d-flex justify-content-between">
+      {roadmap && (
+        <div>
 
-                    <strong>
-                      Learning Progress
-                    </strong>
+          {/* Roadmap Header */}
 
-                    <strong className="text-success">
-                      {overallProgress}%
-                    </strong>
+          <div className="card shadow border-0 mb-4">
 
+            <div className="card-body p-4">
+
+              <span className="badge bg-success mb-2">
+                PERSONALIZED ROADMAP
+              </span>
+
+              <h2 className="fw-bold">
+                {roadmap.title}
+              </h2>
+
+              <div className="row mt-4">
+
+                <div className="col-md-4 mb-3">
+                  <div className="p-3 bg-light rounded">
+                    <small className="text-muted">
+                      Career
+                    </small>
+
+                    <div className="fw-bold">
+                      {roadmap.career ||
+                        career}
+                    </div>
                   </div>
+                </div>
 
-                  <div
-                    className="progress mt-2"
-                    style={{
-                      height: "18px",
-                      borderRadius: "15px",
-                    }}
-                  >
+                <div className="col-md-4 mb-3">
+                  <div className="p-3 bg-light rounded">
+                    <small className="text-muted">
+                      Experience
+                    </small>
 
-                    <div
-                      className="progress-bar bg-success"
-                      style={{
-                        width: `${overallProgress}%`,
-                      }}
-                    ></div>
-
+                    <div className="fw-bold">
+                      {roadmap.experience ||
+                        experience}
+                    </div>
                   </div>
+                </div>
 
-                  <small className="text-muted">
-                    {completedTopicCount} of{" "}
-                    {totalTopics} topics
-                    completed
-                  </small>
+                <div className="col-md-4 mb-3">
+                  <div className="p-3 bg-light rounded">
+                    <small className="text-muted">
+                      Duration
+                    </small>
 
+                    <div className="fw-bold">
+                      {roadmap.duration ||
+                        "6 Months"}
+                    </div>
+                  </div>
                 </div>
 
               </div>
 
             </div>
 
-            {/* =================================================
-                MODULES
-            ================================================= */}
+          </div>
 
-            {roadmap.modules?.map(
-              (module, index) => (
+          {/* ================================================= */}
+          {/* MODULES */}
+          {/* ================================================= */}
 
-                <div
-                  key={index}
-                  className="card border-0 shadow mb-4"
-                  style={{
-                    borderRadius: "18px",
-                  }}
-                >
-
-                  <div className="card-body p-4">
-
-                    <div className="d-flex justify-content-between align-items-center mb-3">
-
-                      <h4 className="text-success fw-bold mb-0">
-
-                        📘 Module{" "}
-                        {index + 1}:{" "}
-                        {module.title}
-
-                      </h4>
-
-                      <span className="badge bg-light text-dark">
-
-                        ⏳{" "}
-                        {module.duration}
-
-                      </span>
-
-                    </div>
-
-                    <h5 className="mb-3">
-                      Topics
-                    </h5>
-
-                    <div className="row">
-
-                      {module.topics?.map(
-                        (topic, i) => (
-
-                          <div
-                            className="col-md-6 mb-3"
-                            key={i}
-                          >
-
-                            <div
-                              className="card h-100 border"
-                              style={{
-                                borderRadius:
-                                  "15px",
-                                cursor:
-                                  "pointer",
-                              }}
-                              onClick={() => {
-                                setSelectedTopic(
-                                  topic
-                                );
-
-                                setCodingQuestions(
-                                  []
-                                );
-                              }}
-                            >
-
-                              <div className="card-body">
-
-                                <div className="d-flex justify-content-between">
-
-                                  <h5 className="fw-bold">
-
-                                    {isTopicCompleted(
-                                      topic
-                                    )
-                                      ? "✅"
-                                      : "📚"}{" "}
-
-                                    {topic}
-
-                                  </h5>
-
-                                  <span className="badge bg-primary">
-                                    Learn
-                                  </span>
-
-                                </div>
-
-                                <p className="text-muted mb-0">
-                                  Video • Interview
-                                  • Coding • Quiz
-                                </p>
-
-                              </div>
-
-                            </div>
-
-                          </div>
-
-                        )
-                      )}
-
-                    </div>
-
-                  </div>
-
-                </div>
-
-              )
-            )}
-
-            {/* =================================================
-                TOPIC LEARNING PANEL
-            ================================================= */}
-
-            {selectedTopic && (
+          {roadmap.modules?.map(
+            (module, moduleIndex) => (
 
               <div
-                className="card border-0 shadow-lg mb-5"
-                style={{
-                  borderRadius: "20px",
-                  overflow: "hidden",
-                }}
+                className="card shadow-sm border-0 mb-4"
+                key={moduleIndex}
               >
-
-                {/* TOPIC HEADER */}
-
-                <div className="card-header bg-primary text-white p-4">
-
-                  <div className="d-flex justify-content-between align-items-center">
-
-                    <h3 className="mb-0">
-                      📚 {selectedTopic}
-                    </h3>
-
-                    <button
-                      className="btn btn-light"
-                      onClick={() => {
-                        setSelectedTopic(null);
-                        setCodingQuestions([]);
-                      }}
-                    >
-                      ✕ Close
-                    </button>
-
-                  </div>
-
-                </div>
 
                 <div className="card-body p-4">
 
-                  {/* =================================================
-                      RESOURCE CARDS
-                  ================================================= */}
+                  {/* Module Header */}
 
-                  <div className="row">
+                  <div className="d-flex justify-content-between align-items-start mb-3">
 
-                    {/* VIDEO */}
+                    <div>
 
-                    <div className="col-lg-3 col-md-6 mb-4">
+                      <span className="badge bg-primary mb-2">
+                        MODULE{" "}
+                        {module.moduleNumber ||
+                          moduleIndex + 1}
+                      </span>
 
-                      <div className="card h-100 shadow-sm border-0">
+                      <h3 className="fw-bold mb-1">
+                        {module.title}
+                      </h3>
 
-                        <div className="card-body text-center">
-
-                          <div
-                            style={{
-                              fontSize: "45px",
-                            }}
-                          >
-                            📺
-                          </div>
-
-                          <h5 className="fw-bold mt-2">
-                            Learn Video
-                          </h5>
-
-                          <p className="text-muted">
-                            Watch a tutorial
-                            related to{" "}
-                            {selectedTopic}.
-                          </p>
-
-                          <button
-                            className="btn btn-danger w-100"
-                            onClick={() =>
-                              openVideo(
-                                selectedTopic
-                              )
-                            }
-                          >
-                            ▶ Watch Video
-                          </button>
-
-                        </div>
-
-                      </div>
+                      <p className="text-muted">
+                        {module.description}
+                      </p>
 
                     </div>
 
-                    {/* INTERVIEW */}
-
-                    <div className="col-lg-3 col-md-6 mb-4">
-
-                      <div className="card h-100 shadow-sm border-0">
-
-                        <div className="card-body text-center">
-
-                          <div
-                            style={{
-                              fontSize: "45px",
-                            }}
-                          >
-                            📝
-                          </div>
-
-                          <h5 className="fw-bold mt-2">
-                            Interview Questions
-                          </h5>
-
-                          <p className="text-muted">
-                            Prepare important
-                            interview questions.
-                          </p>
-
-                          <button
-                            className="btn btn-warning w-100"
-                            onClick={() =>
-                              document
-                                .getElementById(
-                                  "interview-section"
-                                )
-                                ?.scrollIntoView({
-                                  behavior:
-                                    "smooth",
-                                })
-                            }
-                          >
-                            View Questions
-                          </button>
-
-                        </div>
-
-                      </div>
-
-                    </div>
-
-                    {/* CODING */}
-
-                    <div className="col-lg-3 col-md-6 mb-4">
-
-                      <div className="card h-100 shadow-sm border-0">
-
-                        <div className="card-body text-center">
-
-                          <div
-                            style={{
-                              fontSize: "45px",
-                            }}
-                          >
-                            💻
-                          </div>
-
-                          <h5 className="fw-bold mt-2">
-                            Coding Practice
-                          </h5>
-
-                          <p className="text-muted">
-                            AI-generated problems
-                            related to{" "}
-                            {selectedTopic}.
-                          </p>
-
-                          <button
-                            className="btn btn-dark w-100"
-                            disabled={
-                              codingLoading
-                            }
-                            onClick={async () => {
-                              await loadCodingQuestions(
-                                selectedTopic
-                              );
-
-                              setTimeout(() => {
-                                document
-                                  .getElementById(
-                                    "coding-section"
-                                  )
-                                  ?.scrollIntoView({
-                                    behavior:
-                                      "smooth",
-                                  });
-                              }, 300);
-                            }}
-                          >
-                            {codingLoading
-                              ? "🤖 Generating..."
-                              : "💻 Start Coding"}
-                          </button>
-
-                        </div>
-
-                      </div>
-
-                    </div>
-
-                    {/* QUIZ */}
-
-                    <div className="col-lg-3 col-md-6 mb-4">
-
-                      <div className="card h-100 shadow-sm border-0">
-
-                        <div className="card-body text-center">
-
-                          <div
-                            style={{
-                              fontSize: "45px",
-                            }}
-                          >
-                            🧪
-                          </div>
-
-                          <h5 className="fw-bold mt-2">
-                            Practice Quiz
-                          </h5>
-
-                          <p className="text-muted">
-                            Test your knowledge.
-                          </p>
-
-                          <button
-                            className="btn btn-success w-100"
-                            onClick={() =>
-                              startQuiz(
-                                selectedTopic
-                              )
-                            }
-                          >
-                            Start Quiz
-                          </button>
-
-                        </div>
-
-                      </div>
-
-                    </div>
+                    <span className="badge bg-light text-dark">
+                      {module.duration}
+                    </span>
 
                   </div>
 
-                  {/* =================================================
-                      INTERVIEW QUESTIONS
-                  ================================================= */}
+                  {/* Topics */}
 
-                  <div
-                    id="interview-section"
-                    className="mt-4"
-                  >
+                  <div className="row">
 
-                    <h4 className="fw-bold text-warning">
-                      📝 Interview Questions
-                    </h4>
-
-                    {getInterviewQuestions(
-                      selectedTopic
-                    ).map(
-                      (
-                        question,
-                        index
-                      ) => (
+                    {module.topics?.map(
+                      (topic, topicIndex) => (
 
                         <div
-                          className="card border-0 shadow-sm mb-2"
-                          key={index}
+                          className="col-md-6 mb-3"
+                          key={topicIndex}
                         >
 
-                          <div className="card-body">
+                          <div className="card h-100 border">
 
-                            <strong>
-                              Q{index + 1}.
-                            </strong>{" "}
+                            <div className="card-body">
 
-                            {question}
+                              <div className="d-flex gap-3">
+
+                                <div
+                                  className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0"
+                                  style={{
+                                    width: "42px",
+                                    height: "42px",
+                                  }}
+                                >
+                                  {topic.topicNumber ||
+                                    topicIndex + 1}
+                                </div>
+
+                                <div>
+
+                                  <h5 className="fw-bold">
+                                    {topic.title}
+                                  </h5>
+
+                                  <p className="text-muted small">
+                                    {topic.description}
+                                  </p>
+
+                                </div>
+
+                              </div>
+
+                              {/* Learning Items */}
+
+                              <div className="mt-3">
+
+                                {topic.video
+                                  ?.required && (
+                                  <div className="mb-2">
+                                    🎥 Video
+                                    <span className="text-muted ms-2">
+                                      {
+                                        topic.video
+                                          .duration
+                                      }
+                                    </span>
+                                  </div>
+                                )}
+
+                                {topic.notes
+                                  ?.required && (
+                                  <div className="mb-2">
+                                    📝 Notes
+                                  </div>
+                                )}
+
+                                {topic.quiz
+                                  ?.required && (
+                                  <div className="mb-2">
+                                    🧠 Quiz
+                                    <span className="text-muted ms-2">
+                                      {
+                                        topic.quiz
+                                          .questionCount
+                                      }{" "}
+                                      questions
+                                    </span>
+                                  </div>
+                                )}
+
+                                {topic.coding
+                                  ?.required && (
+                                  <div className="mb-2">
+                                    💻 Coding
+                                    <span className="text-muted ms-2">
+                                      {
+                                        topic.coding
+                                          .questionCount
+                                      }{" "}
+                                      questions
+                                    </span>
+                                  </div>
+                                )}
+
+                              </div>
+
+                              <button
+                                className="btn btn-outline-primary w-100 mt-3"
+                                onClick={() =>
+                                  handleTopicStart(
+                                    moduleIndex,
+                                    topicIndex
+                                  )
+                                }
+                              >
+                                Start Topic
+                              </button>
+
+                            </div>
 
                           </div>
 
@@ -1207,448 +628,55 @@ function AIRoadmap() {
 
                   </div>
 
-                  {/* =================================================
-                      CODING QUESTIONS
-                  ================================================= */}
+                  {/* Project */}
 
-                  <div
-                    id="coding-section"
-                    className="mt-5"
-                  >
+                  {module.project && (
+                    <div className="alert alert-info mt-3 mb-0">
 
-                    <div className="d-flex justify-content-between align-items-center mb-3">
+                      <h5 className="fw-bold">
+                        🚀 Module Project
+                      </h5>
 
-                      <h4 className="fw-bold text-dark mb-0">
-                        💻 Coding Practice
-                      </h4>
+                      <strong>
+                        {module.project.title}
+                      </strong>
 
-                      {codingQuestions.length > 0 && (
-                        <span className="badge bg-success">
-                          {codingQuestions.length} Problems
-                        </span>
-                      )}
+                      <p className="mb-0 mt-1">
+                        {module.project.description}
+                      </p>
 
                     </div>
-
-                    {/* INITIAL MESSAGE */}
-
-                    {!codingLoading &&
-                      codingQuestions.length ===
-                        0 && (
-
-                        <div className="alert alert-secondary">
-
-                          <strong>
-                            💡 Ready to practice?
-                          </strong>
-
-                          <p className="mb-0 mt-1">
-                            Click{" "}
-                            <strong>
-                              Start Coding
-                            </strong>{" "}
-                            above to generate
-                            coding problems
-                            specifically for{" "}
-                            <strong>
-                              {selectedTopic}
-                            </strong>.
-                          </p>
-
-                        </div>
-
-                      )}
-
-                    {/* LOADING */}
-
-                    {codingLoading && (
-
-                      <div className="text-center py-5">
-
-                        <div
-                          className="spinner-border text-dark"
-                          style={{
-                            width: "3rem",
-                            height: "3rem",
-                          }}
-                        ></div>
-
-                        <h5 className="mt-3">
-                          🤖 AI is creating
-                          coding problems...
-                        </h5>
-
-                        <p className="text-muted">
-                          Creating LeetCode-style
-                          questions for{" "}
-                          {selectedTopic}
-                        </p>
-
-                      </div>
-
-                    )}
-
-                    {/* QUESTIONS */}
-
-                    {!codingLoading &&
-                      codingQuestions.length >
-                        0 && (
-
-                        <div>
-
-                          {codingQuestions.map(
-                            (
-                              question,
-                              index
-                            ) => (
-
-                              <div
-                                className="card border-0 shadow-sm mb-3"
-                                key={
-                                  question.id ||
-                                  index
-                                }
-                              >
-
-                                <div className="card-body">
-
-                                  <div className="d-flex justify-content-between align-items-start">
-
-                                    <div>
-
-                                      <h5 className="fw-bold mb-2">
-
-                                        Problem{" "}
-                                        {index + 1}:{" "}
-                                        {question.title}
-
-                                      </h5>
-
-                                      <span
-                                        className={
-                                          question.difficulty ===
-                                          "Medium"
-                                            ? "badge bg-warning text-dark"
-                                            : "badge bg-success"
-                                        }
-                                      >
-                                        {question.difficulty ||
-                                          "Easy"}
-                                      </span>
-
-                                    </div>
-
-                                    <button
-                                      className="btn btn-dark"
-                                      onClick={() =>
-                                        openCodingPractice(
-                                          question
-                                        )
-                                      }
-                                    >
-                                      💻 Practice
-                                    </button>
-
-                                  </div>
-
-                                  <p className="text-muted mt-3 mb-0">
-
-                                    {question.description}
-
-                                  </p>
-
-                                  {question.examples?.[0] && (
-
-                                    <div className="bg-light rounded p-3 mt-3">
-
-                                      <strong>
-                                        Example:
-                                      </strong>
-
-                                      <div className="mt-2">
-
-                                        <div>
-                                          <strong>
-                                            Input:
-                                          </strong>{" "}
-                                          <code>
-                                            {
-                                              question
-                                                .examples[0]
-                                                .input
-                                            }
-                                          </code>
-                                        </div>
-
-                                        <div>
-                                          <strong>
-                                            Output:
-                                          </strong>{" "}
-                                          <code>
-                                            {
-                                              question
-                                                .examples[0]
-                                                .output
-                                            }
-                                          </code>
-                                        </div>
-
-                                      </div>
-
-                                    </div>
-
-                                  )}
-
-                                </div>
-
-                              </div>
-
-                            )
-                          )}
-
-                        </div>
-
-                      )}
-
-                  </div>
-
-                  {/* =================================================
-                      QUIZ
-                  ================================================= */}
-
-                  {quizTopic ===
-                    selectedTopic && (
-
-                    <div className="mt-5">
-
-                      <h4 className="fw-bold text-success">
-                        🧪{" "}
-                        {selectedTopic}{" "}
-                        Practice Quiz
-                      </h4>
-
-                      {getQuizQuestions(
-                        selectedTopic
-                      ).map(
-                        (
-                          question,
-                          index
-                        ) => (
-
-                          <div
-                            className="card border-0 shadow-sm mb-3"
-                            key={index}
-                          >
-
-                            <div className="card-body">
-
-                              <h6 className="fw-bold">
-
-                                Q{index + 1}.{" "}
-                                {
-                                  question.question
-                                }
-
-                              </h6>
-
-                              {question.options.map(
-                                (
-                                  option,
-                                  optionIndex
-                                ) => (
-
-                                  <div
-                                    className="form-check mb-2"
-                                    key={
-                                      optionIndex
-                                    }
-                                  >
-
-                                    <input
-                                      className="form-check-input"
-                                      type="radio"
-                                      name={`question-${index}`}
-                                      checked={
-                                        quizAnswers[
-                                          index
-                                        ] ===
-                                        optionIndex
-                                      }
-                                      disabled={
-                                        quizSubmitted
-                                      }
-                                      onChange={() =>
-                                        selectAnswer(
-                                          index,
-                                          optionIndex
-                                        )
-                                      }
-                                    />
-
-                                    <label className="form-check-label">
-                                      {option}
-                                    </label>
-
-                                  </div>
-
-                                )
-                              )}
-
-                              {quizSubmitted && (
-
-                                <div
-                                  className={
-                                    quizAnswers[
-                                      index
-                                    ] ===
-                                    question.answer
-                                      ? "text-success"
-                                      : "text-danger"
-                                  }
-                                >
-
-                                  {quizAnswers[
-                                    index
-                                  ] ===
-                                  question.answer
-                                    ? "✅ Correct"
-                                    : `❌ Correct answer: ${
-                                        question
-                                          .options[
-                                          question.answer
-                                        ]
-                                      }`}
-
-                                </div>
-
-                              )}
-
-                            </div>
-
-                          </div>
-
-                        )
-                      )}
-
-                      {!quizSubmitted ? (
-
-                        <button
-                          className="btn btn-success btn-lg"
-                          onClick={
-                            submitQuiz
-                          }
-                        >
-                          Submit Quiz
-                        </button>
-
-                      ) : (
-
-                        <div className="alert alert-info mt-3">
-
-                          <h4>
-                            🎯 Your Score:{" "}
-                            {quizScore}/5
-                          </h4>
-
-                          {quizScore >= 3 ? (
-
-                            <p className="text-success fw-bold mb-0">
-                              🎉 Great job! Topic
-                              completed.
-                            </p>
-
-                          ) : (
-
-                            <p className="mb-0">
-                              Keep practicing
-                              and try again.
-                            </p>
-
-                          )}
-
-                        </div>
-
-                      )}
-
-                    </div>
-
                   )}
-
-                  {/* =================================================
-                      COMPLETE TOPIC
-                  ================================================= */}
-
-                  <div className="text-center mt-5">
-
-                    {isTopicCompleted(
-                      selectedTopic
-                    ) ? (
-
-                      <div className="alert alert-success">
-
-                        ✅ You have completed{" "}
-
-                        <strong>
-                          {selectedTopic}
-                        </strong>
-
-                      </div>
-
-                    ) : (
-
-                      <button
-                        className="btn btn-outline-success btn-lg"
-                        onClick={() =>
-                          markTopicComplete(
-                            selectedTopic
-                          )
-                        }
-                      >
-                        ✅ Mark Topic as
-                        Completed
-                      </button>
-
-                    )}
-
-                  </div>
 
                 </div>
 
               </div>
 
-            )}
+            )
+          )}
 
-            {/* =================================================
-                BOTTOM BUTTONS
-            ================================================= */}
+          {/* ================================================= */}
+          {/* BACK BUTTON */}
+          {/* ================================================= */}
 
-            <div className="text-center mt-5 mb-5">
+          <div className="text-center mt-4">
 
-              <button
-                className="btn btn-success btn-lg me-3 mb-2"
-                onClick={() =>
-                  navigate("/mycourses")
-                }
-              >
-                📚 Back to My Courses
-              </button>
-
-              <button
-                className="btn btn-primary btn-lg mb-2"
-                onClick={
-                  downloadRoadmap
-                }
-              >
-                📄 Download AI Roadmap PDF
-              </button>
-
-            </div>
+            <button
+              className="btn btn-outline-secondary"
+              onClick={() =>
+                navigate(
+                  `/courses/${courseId}`
+                )
+              }
+            >
+              ← Back to Course
+            </button>
 
           </div>
 
-        )}
+        </div>
+      )}
 
-      </div>
     </div>
   );
 }

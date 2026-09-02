@@ -3,7 +3,6 @@ const {
   generateCodingQuestions,
 } = require("../services/groqService");
 
-
 // =====================================================
 // CREATE AI ROADMAP
 // =====================================================
@@ -14,7 +13,22 @@ const createRoadmap = async (req, res) => {
       career,
       experience,
       dailyTime,
+      courseTitle,
+      courseDescription,
+      courseTopics,
     } = req.body;
+
+    console.log("=================================");
+    console.log("AI ROADMAP REQUEST");
+    console.log("Career:", career);
+    console.log("Experience:", experience);
+    console.log("Daily Time:", dailyTime);
+    console.log("Course:", courseTitle);
+    console.log("=================================");
+
+    // -----------------------------
+    // VALIDATION
+    // -----------------------------
 
     if (!career) {
       return res.status(400).json({
@@ -23,37 +37,82 @@ const createRoadmap = async (req, res) => {
       });
     }
 
+    if (!courseTitle) {
+      return res.status(400).json({
+        success: false,
+        message: "Course title is required",
+      });
+    }
+
+    // -----------------------------
+    // GENERATE ROADMAP
+    // -----------------------------
+
     let roadmap = await generateRoadmap(
       career,
-      experience,
-      dailyTime
+      experience || "Beginner",
+      dailyTime || "2 hours",
+      courseTitle,
+      courseDescription || "",
+      courseTopics || []
     );
 
-    // Remove markdown if AI returns ```json
+    console.log("RAW GROQ ROADMAP:");
+    console.log(roadmap);
+
+    // -----------------------------
+    // REMOVE MARKDOWN
+    // -----------------------------
+
     roadmap = roadmap
       .replace(/```json/g, "")
       .replace(/```/g, "")
       .trim();
 
-    console.log("ROADMAP:");
-    console.log(roadmap);
+    // -----------------------------
+    // FIND JSON
+    // -----------------------------
+
+    const start = roadmap.indexOf("{");
+    const end = roadmap.lastIndexOf("}") + 1;
+
+    if (start === -1 || end <= 0) {
+      throw new Error(
+        "Groq returned invalid roadmap data"
+      );
+    }
+
+    roadmap = roadmap.substring(start, end);
+
+    // -----------------------------
+    // PARSE JSON
+    // -----------------------------
 
     const parsedRoadmap = JSON.parse(roadmap);
 
-    res.status(200).json({
+    console.log("✅ ROADMAP GENERATED");
+
+    // -----------------------------
+    // SEND RESPONSE
+    // -----------------------------
+
+    return res.status(200).json({
       success: true,
+      message: "AI Roadmap generated successfully",
       roadmap: parsedRoadmap,
     });
 
   } catch (error) {
     console.error(
-      "Create Roadmap Error:",
+      "❌ Create Roadmap Error:",
       error
     );
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: error.message,
+      message:
+        error.message ||
+        "Failed to generate AI roadmap",
     });
   }
 };
@@ -63,15 +122,22 @@ const createRoadmap = async (req, res) => {
 // CREATE CODING QUESTIONS
 // =====================================================
 
-const createCodingQuestions = async (
-  req,
-  res
-) => {
+const createCodingQuestions = async (req, res) => {
   try {
     const {
       topic,
       career,
     } = req.body;
+
+    console.log("=================================");
+    console.log("CODING QUESTION REQUEST");
+    console.log("Topic:", topic);
+    console.log("Career:", career);
+    console.log("=================================");
+
+    // -----------------------------
+    // VALIDATION
+    // -----------------------------
 
     if (!topic) {
       return res.status(400).json({
@@ -80,42 +146,76 @@ const createCodingQuestions = async (
       });
     }
 
+    // -----------------------------
+    // GENERATE QUESTIONS
+    // -----------------------------
+
     let questions =
       await generateCodingQuestions(
         topic,
         career || "Software Developer"
       );
 
-    // Remove markdown if AI returns ```json
+    console.log("RAW GROQ QUESTIONS:");
+    console.log(questions);
+
+    // -----------------------------
+    // REMOVE MARKDOWN
+    // -----------------------------
+
     questions = questions
       .replace(/```json/g, "")
       .replace(/```/g, "")
       .trim();
 
-    console.log(
-      "CODING QUESTIONS:"
+    // -----------------------------
+    // FIND JSON
+    // -----------------------------
+
+    const start = questions.indexOf("{");
+    const end = questions.lastIndexOf("}") + 1;
+
+    if (start === -1 || end <= 0) {
+      throw new Error(
+        "Groq returned invalid coding question data"
+      );
+    }
+
+    questions = questions.substring(
+      start,
+      end
     );
 
-    console.log(questions);
+    // -----------------------------
+    // PARSE JSON
+    // -----------------------------
 
     const parsedQuestions =
       JSON.parse(questions);
 
-    res.status(200).json({
+    console.log("✅ CODING QUESTIONS GENERATED");
+
+    // -----------------------------
+    // SEND RESPONSE
+    // -----------------------------
+
+    return res.status(200).json({
       success: true,
+      message: "Coding questions generated successfully",
       data: parsedQuestions,
     });
 
   } catch (error) {
     console.error(
-      "Create Coding Questions Error:",
+      "❌ Create Coding Questions Error:",
       error
     );
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message:
-        error.message,
+        error.message ||
+        "Failed to generate coding questions",
     });
   }
 };
